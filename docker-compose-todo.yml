@@ -1,0 +1,71 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:16
+    networks: 
+      - local_todo_network
+    container_name: todolist_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_TODO_DATABASE}
+      POSTGRES_USER: ${DB_TODO_USER}
+      POSTGRES_PASSWORD: ${DB_TODO_PASSWORD}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: todolist_pgadmin
+    networks: 
+      - local_todo_network
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@local.dev
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "5050:80"
+    depends_on:
+      - postgres
+
+  todo_backend:
+    build: ./backendTodoList
+    restart: always
+    networks: 
+      - local_todo_network
+    ports:
+      - 8140:3000
+    environment:
+      CONTAINER_NAME: todo_backend
+      PORT: 3000
+      DB_HOST: postgres
+      DB_DATABASE: ${DB_TODO_DATABASE}
+      DB_PASSWORD: ${DB_TODO_PASSWORD}
+      DB_USER: ${DB_TODO_USER}
+    depends_on:
+      - postgres
+    labels:
+      - "traefik.enable=true"
+      # http (без TLS)
+      - "traefik.http.routers.todo_http.rule=PathPrefix(`/api-todo`)"
+      - "traefik.http.routers.todo_http.entrypoints=web"
+      - "traefik.http.routers.todo_http.service=todo"
+      - "traefik.http.routers.todo_http.middlewares=auth_sso@docker"
+      # https (с TLS)
+      - "traefik.http.routers.todo_https.rule=PathPrefix(`/api-todo`)"
+      - "traefik.http.routers.todo_https.entrypoints=websecure"
+      - "traefik.http.routers.todo_https.tls=true"
+      - "traefik.http.routers.todo_https.service=todo"
+      - "traefik.http.routers.todo_https.middlewares=auth_sso@docker"
+      # общий сервис
+      - "traefik.http.services.todo.loadbalancer.server.port=3000"
+
+volumes:
+  pgdata:
+
+networks:
+  local_todo_network:
+    name: ${NETWORK_NAME}
+    external: true

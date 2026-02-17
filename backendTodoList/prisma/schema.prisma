@@ -1,0 +1,50 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model TodoList {
+  id        String   @id @default(uuid())
+  title     String
+  ownerId   String   // user id from auth service
+  createdAt DateTime @default(now())
+
+  todos     Todo[]
+  access    TodoListAccess[]
+}
+
+model TodoListAccess {
+  id         String   @id @default(uuid())
+  todoListId String
+  userId     String   // user id from auth service
+
+  todoList  TodoList @relation(fields: [todoListId], references: [id], onDelete: Cascade)
+
+  @@unique([todoListId, userId])
+}
+
+model Todo {
+  id          String   @id @default(uuid())
+  title       String
+  description String
+  date        DateTime? 
+  createdAt   DateTime @default(now())
+
+  todoListId  String
+  todoList    TodoList @relation(fields: [todoListId], references: [id], onDelete: Cascade)
+
+  comments    Comment[]
+}
+
+model Comment {
+  id        String   @id @default(uuid())
+  text      String
+  authorId  String   // user id from auth service
+  createdAt DateTime @default(now())
+
+  todoId    String
+  todo      Todo     @relation(fields: [todoId], references: [id], onDelete: Cascade)
+}
