@@ -1,5 +1,7 @@
 import { authPrivilege } from "@root/hooks/authPrivilege.js";
 import { FastifyInstance } from "fastify";
+import { createTodoListSchema, createTodoSchema, deleteTodoList, getTodoListSchema, getTodosTodoListSchemas } from "./openApiSchemas/todolist.js";
+import { creactComment, deleteComment, deleteTodo, getTodoSchema } from "./openApiSchemas/todo.js";
 
 
 export function route(app: FastifyInstance)
@@ -12,51 +14,7 @@ export function route(app: FastifyInstance)
     "/todolists",
     {
         preHandler: authPrivilege("todolist:create"),
-        schema: {
-        tags: ['TodoLists'],
-        summary: 'Создать новый список задач',
-        description: 'Создает новый список задач для текущего пользователя',
-        security: [{ bearerAuth: [] }],
-        body: {
-            type: 'object',
-            required: ['title'],
-            properties: {
-            title: {
-                type: 'string',
-                description: 'Название списка задач',
-                minLength: 1,
-                maxLength: 100,
-                examples: ['Проект по разработке']
-            }
-            }
-        },
-        response: {
-            200: {
-            description: 'Список успешно создан',
-            content: {
-                'application/json': {
-                schema: { $ref: 'TodoList#' }
-                }
-            }
-            },
-            400: {
-            description: 'Ошибка валидации',
-            content: {
-                'application/json': {
-                schema: { $ref: 'Error#' }
-                }
-            }
-            },
-            401: {
-            description: 'Не авторизован',
-            content: {
-                'application/json': {
-                schema: { $ref: 'Error#' }
-                }
-            }
-            }
-        }
-        }
+        schema: createTodoListSchema
     },
     async (req, reply) => {
         try {
@@ -86,35 +44,7 @@ export function route(app: FastifyInstance)
     "/todolists",
     {
         preHandler: authPrivilege("todolist:read"),
-        schema: {
-        tags: ['TodoLists'],
-        summary: 'Получить все списки задач пользователя',
-        description: 'Возвращает списки задач, где пользователь является владельцем или имеет доступ',
-        security: [{ bearerAuth: [] }],
-        response: {
-            200: {
-            description: 'Список задач успешно получен',
-            type: 'array',
-            items: { $ref: 'TodoList#' }
-            },
-            400: {
-                description: 'Ошибка получения списка задач',
-                content: {
-                    'application/json': {
-                        schema: { $ref: 'Error#' }
-                    }
-                }
-            },
-            401: {
-            description: 'Не авторизован',
-            content: {
-                'application/json': {
-                schema: { $ref: 'Error#' }
-                }
-            }
-            }
-        }
-        }
+        schema: getTodoListSchema
     },
     async (req, reply) => {
         try {
@@ -145,77 +75,7 @@ export function route(app: FastifyInstance)
     "/todolists/:id/todos",
     {
         preHandler: authPrivilege("todolist:create"),
-        schema: {
-        tags: ['Todos'],
-        summary: 'Создать новую задачу в списке',
-        description: 'Создает новую задачу в указанном списке',
-        security: [{ bearerAuth: [] }],
-        params: {
-            type: 'object',
-            required: ['id'],
-            properties: {
-            id: {
-                type: 'string',
-                format: 'uuid',
-                description: 'ID списка задач',
-                examples: ['123e4567-e89b-12d3-a456-426614174000']
-            }
-            }
-        },
-        body: {
-            type: 'object',
-            required: ['title'],
-            properties: {
-            title: {
-                type: 'string',
-                description: 'Название задачи',
-                minLength: 1,
-                maxLength: 200,
-                examples: ['Написать код']
-            },
-            description: {
-                type: 'string',
-                description: 'Подробное описание задачи',
-                maxLength: 1000,
-                examples: ['Реализовать API для управления задачами']
-            }
-            }
-        },
-        response: {
-            200: {
-            description: 'Задача успешно создана',
-            content: {
-                'application/json': {
-                schema: { $ref: 'Todo#' }
-                }
-            }
-            },
-            400: {
-            description: 'Ошибка валидации',
-            content: {
-                'application/json': {
-                schema: { $ref: 'Error#' }
-                }
-            }
-            },
-            401: {
-            description: 'Не авторизован',
-            content: {
-                'application/json': {
-                schema: { $ref: 'Error#' }
-                }
-            }
-            },
-            404: {
-            description: 'Список не найден',
-            content: {
-                'application/json': {
-                schema: { $ref: 'Error#' }
-                }
-            }
-            }
-        }
-        }
+        schema: createTodoSchema
     },
     async (req, reply) => {
         try {
@@ -251,77 +111,104 @@ export function route(app: FastifyInstance)
     );
 
     /**
+     * Get specific TodoList with all its todos
+     * Only owner or users with access can view
+     */
+    app.get<{ Params: { id: string } }>(
+    "/todolists/:id",
+    {
+        preHandler: authPrivilege("todolist:read"),
+        schema: getTodosTodoListSchemas,
+    },
+    async (req, reply) => {
+        try {
+        const userId = req.user!.id;
+        const { id } = req.params;
+
+        // Ищем список, к которому пользователь имеет доступ (владелец или есть запись в access)
+        const todoList = await app.prisma.todoList.findFirst({
+            where: {
+            id,
+            OR: [{ ownerId: userId }, { access: { some: { userId } } }],
+            },
+            include: {
+            todos: true, // включаем все задачи списка
+            },
+        });
+
+        if (!todoList) {
+            return reply.status(404).send({
+            statusCode: 404,
+            error: "Not Found",
+            message: "Todo list not found or access denied",
+            });
+        }
+
+        return reply.status(200).send(todoList);
+        } catch (error) {
+        app.log.error(error);
+        return reply.status(400).send({
+            statusCode: 400,
+            error: "Bad Request",
+            message: "Failed to fetch todo list",
+        });
+        }
+    },
+    );
+
+    app.get<{Params: {id: string}}>(
+      "/todos/:id",
+      {
+        preHandler: authPrivilege("todolist:read"),
+        schema: getTodoSchema
+      },
+      async (req, reply) => {
+        try{
+          const userId = req.user!.id;
+          const { id } = req.params;
+          const todo = app.prisma.todo.findFirst({
+            where: {
+              id,
+              todoList: {
+                OR: [
+                  { ownerId: userId },
+                  { access: { some: { userId } } },
+                ]
+              }
+            },
+            include: {
+              comments: true
+            }
+          })
+
+        if (!todo) {
+          return reply.status(404).send({
+            statusCode: 404,
+            error: "Not Found",
+            message: "Todo not found or access denied",
+          });
+        }
+
+        return reply.status(200).send(todo);
+      }
+      catch (error) {
+        app.log.error(error);
+        return reply.status(400).send({
+          statusCode: 400,
+          error: "Bad Request",
+          message: "Failed to fetch todo",
+        });
+      }}
+    )
+
+    /**
      * Add comment
      */
     app.post<{ Body: { text: string }, Params: { id: string } }>(
     "/todos/:id/comments",
     {
         preHandler: authPrivilege("todolist:comment"),
-        schema: {
-        tags: ['Comments'],
-        summary: 'Добавить комментарий к задаче',
-        description: 'Добавляет новый комментарий к указанной задаче',
-        security: [{ bearerAuth: [] }],
-        params: {
-            type: 'object',
-            required: ['id'],
-            properties: {
-            id: {
-                type: 'string',
-                format: 'uuid',
-                description: 'ID задачи',
-                examples: ['123e4567-e89b-12d3-a456-426614174002']
-            }
-            }
-        },
-        body: {
-            type: 'object',
-            required: ['text'],
-            properties: {
-            text: {
-                type: 'string',
-                description: 'Текст комментария',
-                minLength: 1,
-                maxLength: 500,
-                examples: ['Нужно добавить валидацию']
-            }
-            }
-        },
-        response: {
-            200: {
-            description: 'Комментарий успешно добавлен',
-            content: {
-                'application/json': {
-                schema: { $ref: 'Comment#' }
-                }
-            }
-            },
-            400: {
-            description: 'Ошибка валидации',
-            content: {
-                'application/json': {
-                schema: { $ref: 'Error#' }
-                }
-            }
-            },
-            401: {
-            description: 'Не авторизован',
-            content: {
-                'application/json': {
-                schema: { $ref: 'Error#' }
-                }
-            }
-            },
-            404: {
-            description: 'Задача не найдена',
-            content: {
-                'application/json': {
-                schema: { $ref: 'Error#' }
-                }
-            }
-            }
-        }
-        }
+        schema: creactComment
     },
     async (req, reply) => {
         try {
@@ -355,4 +242,184 @@ export function route(app: FastifyInstance)
         }
     }
     );
+
+    /**
+ * Delete TodoList (cascade: todos and comments)
+ * Only owner or user with delete privilege can delete
+ */
+app.delete<{ Params: { id: string } }>(
+  "/todolists/:id",
+  {
+    preHandler: authPrivilege("todolist:delete"),
+    schema: deleteTodoList
+  },
+  async (req, reply) => {
+    const userId = req.user!.id;
+    const { id } = req.params;
+
+    // Проверяем, что пользователь имеет право на удаление этого списка
+    const todoList = await app.prisma.todoList.findFirst({
+      where: {
+        id,
+        OR: [
+          { ownerId: userId },
+          { access: { some: { userId } } }
+        ],
+      },
+    });
+
+    if (!todoList) {
+      return reply.status(404).send({
+        statusCode: 404,
+        error: "Not Found",
+        message: "Todo list not found or access denied",
+      });
+    }
+
+    try {
+      // Если в схеме Prisma настроено onDelete: Cascade, достаточно удалить список
+      await app.prisma.todoList.delete({
+        where: { id },
+      });
+      return reply.status(204).send();
+    } catch (error) {
+      app.log.error(error);
+      return reply.status(400).send({
+        statusCode: 400,
+        error: "Bad Request",
+        message: "Failed to delete todo list",
+      });
+    }
+  },
+);
+
+
+/**
+ * Delete Todo (cascade: comments)
+ * User must have access to parent TodoList
+ */
+app.delete<{ Params: { id: string } }>(
+  "/todos/:id",
+  {
+    preHandler: authPrivilege("todo:delete"),
+    schema: deleteTodo
+  },
+  async (req, reply) => {
+    const userId = req.user!.id;
+    const { id } = req.params;
+
+    // Находим задачу и проверяем доступ через родительский список
+    const todo = await app.prisma.todo.findUnique({
+      where: { id },
+      include: {
+        todoList: {
+          include: {
+            access: { where: { userId } },
+          },
+        },
+      },
+    });
+
+    if (!todo) {
+      return reply.status(404).send({
+        statusCode: 404,
+        error: "Not Found",
+        message: "Todo not found",
+      });
+    }
+
+    // Проверяем, является ли пользователь владельцем списка или имеет доступ с правом удаления задач
+    const isOwner = todo.todoList.ownerId === userId;
+    const hasAccess = todo.todoList.access.length > 0 && todo.todoList.access[0]; // предполагаем поле canDeleteTodos
+
+    if (!isOwner && !hasAccess) {
+      return reply.status(403).send({
+        statusCode: 403,
+        error: "Forbidden",
+        message: "You do not have permission to delete this todo",
+      });
+    }
+
+    try {
+      await app.prisma.todo.delete({
+        where: { id },
+      });
+      return reply.status(204).send();
+    } catch (error) {
+      app.log.error(error);
+      return reply.status(400).send({
+        statusCode: 400,
+        error: "Bad Request",
+        message: "Failed to delete todo",
+      });
+    }
+  },
+);
+
+/**
+ * Delete Comment
+ * User must be the author or have access to parent TodoList with delete privilege
+ */
+app.delete<{ Params: { id: string } }>(
+  "/comments/:id",
+  {
+    preHandler: authPrivilege("comment:delete"),
+    schema: deleteComment,
+  },
+  async (req, reply) => {
+    const userId = req.user!.id;
+    const { id } = req.params;
+
+    // Находим комментарий и связанные данные для проверки прав
+    const comment = await app.prisma.comment.findUnique({
+      where: { id },
+      include: {
+        todo: {
+          include: {
+            todoList: {
+              include: {
+                access: { where: { userId } },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!comment) {
+      return reply.status(404).send({
+        statusCode: 404,
+        error: "Not Found",
+        message: "Comment not found",
+      });
+    }
+
+    // Права: автор комментария или владелец списка / участник с правом удаления комментариев
+    const isAuthor = comment.authorId === userId;
+    const isOwner = comment.todo.todoList.ownerId === userId;
+    const hasAccess = comment.todo.todoList.access.length > 0 && comment.todo.todoList.access[0];
+
+    if (!isAuthor && !isOwner && !hasAccess) {
+      return reply.status(403).send({
+        statusCode: 403,
+        error: "Forbidden",
+        message: "You do not have permission to delete this comment",
+      });
+    }
+
+    try {
+      await app.prisma.comment.delete({
+        where: { id },
+      });
+      return reply.status(204).send();
+    } catch (error) {
+      app.log.error(error);
+      return reply.status(400).send({
+        statusCode: 400,
+        error: "Bad Request",
+        message: "Failed to delete comment",
+      });
+    }
+  },
+);
 }

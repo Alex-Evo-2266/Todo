@@ -3,15 +3,15 @@
 import "dotenv/config";
 import { defineConfig } from "prisma/config";
 
-const DB_HOST = process.env.DB_HOST
-const DB_DATABASE = process.env.DB_DATABASE
-const DB_USER = process.env.DB_USER
-const DB_PASSWORD = process.env.DB_PASSWORD
+// const DB_HOST = process.env.DB_HOST
+// const DB_DATABASE = process.env.DB_DATABASE
+// const DB_USER = process.env.DB_USER
+// const DB_PASSWORD = process.env.DB_PASSWORD
 
-// const DB_HOST = "localhost"
-// const DB_DATABASE = "todolist"
-// const DB_USER = "todolist"
-// const DB_PASSWORD = "todolist"
+const DB_HOST = "localhost"
+const DB_DATABASE = "todolist"
+const DB_USER = "todolist"
+const DB_PASSWORD = "todolist"
 
 const DATABASE_URL=`postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:5432/${DB_DATABASE}`
 

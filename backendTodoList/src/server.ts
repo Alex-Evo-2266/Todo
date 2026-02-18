@@ -1,6 +1,5 @@
 import Fastify from "fastify";
 import { PrismaClient } from "@prisma/client";
-import { authPrivilege } from "./hooks/authPrivilege.js";
 import { PrismaPg } from "@prisma/adapter-pg";
 import {addSchemas, registerSwagger} from "@src/openAPISchemas.js"
 import { route } from "./routes/router.js";
@@ -18,8 +17,6 @@ async function start() {
     const prisma = new PrismaClient({ adapter })
     app.decorate('prisma', prisma);
     // Регистрируем Swagger
-    // app.register(registerSwagger)
-    // app.register(addSchemas)
     await registerSwagger(app)
     addSchemas(app)
 

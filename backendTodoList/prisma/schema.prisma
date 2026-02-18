@@ -32,6 +32,7 @@ model Todo {
   description String
   date        DateTime? 
   createdAt   DateTime @default(now())
+  updatedAt   DateTime @default(now())
 
   todoListId  String
   todoList    TodoList @relation(fields: [todoListId], references: [id], onDelete: Cascade)
