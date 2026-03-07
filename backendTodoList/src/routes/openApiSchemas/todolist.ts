@@ -46,6 +46,65 @@ export const createTodoListSchema = {
     }
 }
 
+
+export const editTodoListSchema = {
+    tags: ['TodoLists'],
+    summary: 'Изменить список задач',
+    description: 'Изменяет название списка задач',
+    security: [{ bearerAuth: [] }],
+    params: {
+        type: 'object',
+        required: ['id'],
+        properties: {
+        id: {
+            type: 'string',
+            format: 'uuid',
+            description: 'ID списка задач',
+            examples: ['123e4567-e89b-12d3-a456-426614174000']
+        }
+        }
+    },
+    body: {
+        type: 'object',
+        required: ['title'],
+        properties: {
+        title: {
+            type: 'string',
+            description: 'Название списка задач',
+            minLength: 1,
+            maxLength: 100,
+            examples: ['Проект по разработке']
+        }
+        }
+    },
+    response: {
+        201: {
+        description: 'Список успешно создан',
+        content: {
+            'application/json': {
+            schema: { $ref: 'TodoList#' }
+            }
+        }
+        },
+        400: {
+        description: 'Ошибка валидации',
+        content: {
+            'application/json': {
+            schema: { $ref: 'Error#' }
+            }
+        }
+        },
+        401: {
+        description: 'Не авторизован',
+        content: {
+            'application/json': {
+            schema: { $ref: 'Error#' }
+            }
+        }
+        }
+    }
+}
+
 export const getTodoListSchema = {
     tags: ['TodoLists'],
     summary: 'Получить все списки задач пользователя',

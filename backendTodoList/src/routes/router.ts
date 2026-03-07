@@ -1,6 +1,6 @@
 import { authPrivilege } from "@root/hooks/authPrivilege.js";
 import { FastifyInstance } from "fastify";
-import { createTodoListSchema, createTodoSchema, deleteTodoList, getTodoListSchema, getTodosTodoListSchemas } from "./openApiSchemas/todolist.js";
+import { createTodoListSchema, createTodoSchema, deleteTodoList, editTodoListSchema, getTodoListSchema, getTodosTodoListSchemas } from "./openApiSchemas/todolist.js";
 import { creactComment, deleteComment, deleteTodo, getTodoSchema } from "./openApiSchemas/todo.js";
 
 
@@ -37,9 +37,42 @@ export function route(app: FastifyInstance)
     }
     );
 
-    /**
-     * Get TodoLists where user is owner OR has access
-     */
+    app.put<{ Body: { title: string }, Params: { id: string } }>(
+      "/todolists/:id",
+      {
+        preHandler: authPrivilege("todolist:create"),
+        schema: editTodoListSchema
+      },
+      async (req, reply) => {
+        try{
+          const userId = req.user!.id;
+          const id = req.params.id;
+          return await app.prisma.todoList.update({
+            where: {id: id, OR:[
+              { ownerId: userId },
+              { access: { some: { userId } } }
+            ]},
+            data: {title: req.body.title},
+            select: {
+              title: true,
+              ownerId: true,
+              id: true,
+              createdAt: true
+            }
+          })
+
+        }catch(error)
+        {
+          console.log(error)
+          return reply.status(400).send({ 
+            statusCode: 400, 
+            error: 'Bad Request', 
+            message: 'Failed to update todo list' 
+          });
+        }
+      }
+    )
+
     app.get(
     "/todolists",
     {

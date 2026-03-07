@@ -61,6 +61,42 @@ services:
       - "traefik.http.routers.todo_https.middlewares=auth_sso@docker"
       # общий сервис
       - "traefik.http.services.todo.loadbalancer.server.port=3000"
+  
+  todo_frontend:
+    container_name: todo_frontend
+    networks: 
+      - local_todo_network
+    build:
+      context: frontend        
+      dockerfile: Dockerfile
+    restart: always
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.middlewares.todo_frontend_strip.stripprefix.prefixes=/todo"
+      # http
+      - "traefik.http.routers.todo_frontend_http.rule=PathPrefix(`/todo`)"
+      - "traefik.http.routers.todo_frontend_http.entrypoints=web"
+      - "traefik.http.routers.todo_frontend_http.service=todo_frontend"
+      - "traefik.http.routers.todo_frontend_http.priority=1"
+      - "traefik.http.routers.todo_frontend_http.middlewares=todo_frontend_strip"
+
+      # https
+      - "traefik.http.routers.todo_frontend_https.rule=PathPrefix(`/todo`)"
+      - "traefik.http.routers.todo_frontend_https.entrypoints=websecure"
+      - "traefik.http.routers.todo_frontend_https.tls=true"
+      - "traefik.http.routers.todo_frontend_https.service=todo_frontend"
+      - "traefik.http.routers.todo_frontend_https.priority=1"
+      - "traefik.http.routers.todo_frontend_https.middlewares=todo_frontend_strip"
+      # общий сервис
+      - "traefik.http.services.todo_frontend.loadbalancer.server.port=80"
+    depends_on:
+      auth_service:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80/"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
 
 volumes:
   pgdata:

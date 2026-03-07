@@ -73,7 +73,6 @@ export const addSchemas = (app: FastifyInstance) => {
             title: { type: 'string', examples: ['Мой список дел'] },
             ownerId: { type: 'string', format: 'uuid', examples: ['123e4567-e89b-12d3-a456-426614174001'] },
             createdAt: { type: 'string', format: 'date-time' },
-            updatedAt: { type: 'string', format: 'date-time' }
         }
     })
 

@@ -1,0 +1,35 @@
+
+// ---------- Типы на основе схем OpenAPI ----------
+export interface TodoList {
+  id: string;
+  title: string;
+  ownerId: string;
+  createdAt: string;
+}
+
+export interface Todo {
+  id: string;
+  title: string;
+  description?: string;
+  completed: boolean;
+  todoListId: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Comment {
+  id: string;
+  text: string;
+  todoId: string;
+  authorId: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface TodoListWithTodos extends TodoList {
+  todos: Todo[];
+}
+
+export interface TodoWithComments extends Todo {
+  comments: Comment[];
+}

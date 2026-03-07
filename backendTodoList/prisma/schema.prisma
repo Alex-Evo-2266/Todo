@@ -31,13 +31,25 @@ model Todo {
   title       String
   description String
   date        DateTime? 
+
+  parentId   String?
+  parent   Todo?  @relation("TodoChildren", fields: [parentId], references: [id], onDelete: Cascade)
+  children Todo[] @relation("TodoChildren")
+
   createdAt   DateTime @default(now())
   updatedAt   DateTime @default(now())
+  runk        String  @default("0")
+  contVersion Int     @default(0)
+  posVersion  Int     @default(0)
+  status      String?
+  completed   Boolean  @default(false)
 
   todoListId  String
   todoList    TodoList @relation(fields: [todoListId], references: [id], onDelete: Cascade)
 
   comments    Comment[]
+
+  @@index([todoListId, parentId, runk])
 }
 
 model Comment {
