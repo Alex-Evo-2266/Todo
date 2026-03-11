@@ -1,7 +1,8 @@
 import { authPrivilege } from "@root/hooks/authPrivilege.js";
 import { FastifyInstance } from "fastify";
-import { createTodoListSchema, createTodoSchema, deleteTodoList, editTodoListSchema, getTodoListSchema, getTodosTodoListSchemas } from "./openApiSchemas/todolist.js";
+import { createTodoListSchema, createTodoSchema, deleteTodoList, editTodoListSchema, getTodoListSchema, getTodosTodoListSchemas, moveTodoSchema } from "./openApiSchemas/todolist.js";
 import { creactComment, deleteComment, deleteTodo, getTodoSchema } from "./openApiSchemas/todo.js";
+import { LexoRank } from "lexorank";
 
 
 export function route(app: FastifyInstance)
@@ -114,7 +115,7 @@ export function route(app: FastifyInstance)
         try {
         // Проверяем существование списка
         const todoList = await app.prisma.todoList.findUnique({
-            where: { id: req.params.id }
+            where: { id: req.params.id },
         });
 
         if (!todoList) {
@@ -125,11 +126,23 @@ export function route(app: FastifyInstance)
             });
         }
 
+        const lastTodo = await app.prisma.todo.findFirst({
+              where: {todoListId: req.params.id},
+              orderBy: {runk: "desc"}
+            })
+
+        let display_order = LexoRank.middle().toString()
+        if(lastTodo){
+          const last = LexoRank.parse(lastTodo.runk)
+          display_order = last.genNext().toString()
+        }
+
         const todo = await app.prisma.todo.create({
             data: {
             title: req.body.title,
             description: req.body.description ?? "",
             todoListId: req.params.id,
+            runk: display_order
             },
         });
         return reply.status(200).send(todo);
@@ -165,7 +178,11 @@ export function route(app: FastifyInstance)
             OR: [{ ownerId: userId }, { access: { some: { userId } } }],
             },
             include: {
-            todos: true, // включаем все задачи списка
+            todos: {
+              orderBy: {
+                runk: "asc"
+              }
+            }, 
             },
         });
 
@@ -455,4 +472,174 @@ app.delete<{ Params: { id: string } }>(
     }
   },
 );
+
+    app.put<{ Body: { posVersion: number, parentId?:string, targetTask?: string,  placement:string}, Params: { id: string } }>(
+      "/task/:id/move",
+      {
+        preHandler: authPrivilege("todolist:read"),
+        schema: moveTodoSchema
+      },
+      async (req, reply) => {
+        try{
+          const userId = req.user!.id;
+          const id = req.params.id;
+          const {posVersion, targetTask, placement} = req.body
+
+          // 2. Проверяем существование перемещаемой колонки и её принадлежность доске
+          const task = await app.prisma.todo.findFirst({
+            where: {id}
+          })
+          if (!task) {
+            return reply.code(404).send({ error: 'Todo not found in this board' });
+          }
+          if (task.posVersion !== posVersion) {
+            return reply.code(409).send({
+              error: "Position conflict",
+              message: "The task has been moved by another user. Please refresh and try again.",
+              data: task
+            });
+          }
+
+          // 3. Если указана целевая колонка, проверяем её
+          if (targetTask) {
+            const targetTaskItem = app.prisma.todo.findFirst({
+              where: {id: targetTask, todoListId: task.todoListId}
+            })
+            if (!targetTaskItem) {
+              return reply.code(404).send({ error: 'Target column not found in this board' });
+            }
+            // Нельзя перемещать колонку относительно самой себя
+            if (targetTask === id) {
+              return reply.code(400).send({ error: 'Cannot move column relative to itself' });
+            }
+          }
+
+          let newOrder: string;
+
+          const getPrevColumn = async (order: string) => {
+            return app.prisma.todo.findFirst({
+              where:{
+                todoListId: task.todoListId,
+                runk: {lt: order}
+              },
+              orderBy:{
+                runk: "desc"
+              }
+            })
+          };
+
+          // Вспомогательная функция для получения следующей колонки относительно заданного order
+          const getNextColumn = async (order: string) => {
+            return app.prisma.todo.findFirst({
+              where:{
+                todoListId: task.todoListId,
+                runk: {gt: order}
+              },
+              orderBy:{
+                runk: "asc"
+              }
+            })
+          };
+
+          if (placement === 'start') {
+            // Переместить в начало: перед первой колонкой
+            const firstColumn = await app.prisma.todo.findFirst({
+              where: {todoListId: task.todoListId},
+              orderBy: {runk: "asc"}
+            })
+            if (firstColumn) {
+              newOrder = LexoRank.parse(firstColumn.runk).genPrev().toString();
+            } else {
+              // Если колонок нет вообще (только текущая), используем middle
+              newOrder = LexoRank.middle().toString();
+            }
+          }
+          else if (placement === 'end') {
+            // Переместить в конец: после последней колонки
+            const lastColumn = await app.prisma.todo.findFirst({
+              where: {todoListId: task.todoListId},
+              orderBy: {runk: "desc"}
+            })
+            if (lastColumn) {
+              newOrder = LexoRank.parse(lastColumn.runk).genNext().toString();
+            } else {
+              newOrder = LexoRank.middle().toString();
+            }
+          }
+          else if (placement === 'before' || placement === 'after') {
+            if (!targetTask) {
+              return reply.code(400).send({ error: 'targetColumnId is required for before/after placement' });
+            }
+
+            // Получаем целевую колонку (уже проверили существование)
+            const target = await app.prisma.todo.findFirst({
+              where: {id: targetTask, todoListId: task.todoListId}
+            })
+            if(!target)return;
+
+              if (placement === 'before') {
+              // Вставить перед target: найти предыдущую колонку
+              const prev = await getPrevColumn(target.runk);
+              if (prev) {
+                // Есть предыдущая — вставляем между prev и target
+                newOrder = LexoRank.parse(prev.runk)
+                  .between(LexoRank.parse(target.runk))
+                  .toString();
+              } else {
+                // target первая — вставляем перед ней (genPrev)
+                newOrder = LexoRank.parse(target.runk).genPrev().toString();
+              }
+            } else { // after
+              // Вставить после target: найти следующую колонку
+              const next = await getNextColumn(target.runk);
+              if (next) {
+                // Есть следующая — вставляем между target и next
+                newOrder = LexoRank.parse(target.runk)
+                  .between(LexoRank.parse(next.runk))
+                  .toString();
+              } else {
+                // target последняя — вставляем после неё (genNext)
+                newOrder = LexoRank.parse(target.runk).genNext().toString();
+              }
+            }
+          }
+          else {
+            return reply.code(400).send({ error: 'Invalid placement value' });
+          }
+
+          const retData = await app.prisma.todo.update({
+            where: {id: id, todoList:{
+              OR:[
+                { ownerId: userId },
+                { access: { some: { userId } } }
+              ]
+            } },
+            data: {runk: newOrder, posVersion: task.posVersion + 1},
+            select: {
+              title: true,
+              runk: true,
+              id: true,
+              createdAt: true,
+              updatedAt: true,
+              posVersion: true,
+              contVersion: true,
+              completed: true,
+              status: true
+            }
+          })
+              // 6. Возвращаем обновлённую колонку (можно вернуть полные данные)
+              return reply.code(200).send(retData);
+
+
+        }catch(error)
+        {
+          console.log(error)
+          return reply.status(400).send({ 
+            statusCode: 400, 
+            error: 'Bad Request', 
+            message: 'Failed to update todo list' 
+          });
+        }
+      }
+    )
 }

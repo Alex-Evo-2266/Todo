@@ -15,6 +15,11 @@ export interface Todo {
   todoListId: string;
   createdAt: string;
   updatedAt: string;
+  posVersion: number;
+  contVersion: number
+  runk: string
+  status: string
+  parentId: string
 }
 
 export interface Comment {

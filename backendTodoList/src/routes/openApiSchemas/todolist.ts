@@ -303,3 +303,79 @@ export const deleteTodoList = {
         },
     },
 }
+
+export const moveTodoSchema = {
+    tags: ['Todo'],
+    summary: 'Переместить задачу',
+    description: 'Изменяет порядок задач',
+    security: [{ bearerAuth: [] }],
+    params: {
+        type: 'object',
+        required: ['id'],
+        properties: {
+        id: {
+            type: 'string',
+            format: 'uuid',
+            description: 'ID задачи',
+            examples: ['123e4567-e89b-12d3-a456-426614174000']
+        }
+        }
+    },
+    body: {
+        type: 'object',
+        required: ['posVersion'],
+        properties: {
+            posVersion: {
+                type: 'integer',
+                description: 'версия',
+                examples: [1]
+            },
+            parentId: {
+                type: 'string',
+                description: "ID родителя",
+                format: 'uuid',
+                examples: ['123e4567-e89b-12d3-a456-426614174000']
+            },
+            targetTask: {
+                type: 'string',
+                description: "ID относительно какой таски размещать",
+                format: 'uuid',
+                examples: ['123e4567-e89b-12d3-a456-426614174000']
+            },
+            placement: { type: 'string', enum:['before', 'after','start', 'end'] }
+        }
+    },
+    response: {
+        201: {
+            description: 'Список успешно создан',
+            type: "object",
+            properties:{
+                title: {type: "string"},
+                runk: {type: "string"},
+                id: {type: "string"},
+                createdAt: { type: 'string', format: 'date-time' },
+                updatedAt: { type: 'string', format: 'date-time' },
+                posVersion: {type: "integer"},
+                contVersion: {type: "integer"},
+                completed: {type: "boolean"},
+                status: {type: "string"}
+            }
+        },
+        400: {
+        description: 'Ошибка валидации',
+        content: {
+            'application/json': {
+            schema: { $ref: 'Error#' }
+            }
+        }
+        },
+        401: {
+        description: 'Не авторизован',
+        content: {
+            'application/json': {
+            schema: { $ref: 'Error#' }
+            }
+        }
+        }
+    }
+}

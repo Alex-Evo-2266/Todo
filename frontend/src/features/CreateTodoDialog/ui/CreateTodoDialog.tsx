@@ -36,7 +36,7 @@ export const CreateTodoDialog = ({open, onHide, listId}:CreateDialogProps) => {
         return null
 
     return(
-        <FullScreenTemplateDialog saveText={t("save")} cancelText={t("cancel")} onHide={onHide} onSave={saveHandler}>
+        <FullScreenTemplateDialog header={t("create_task")} saveText={t("save")} cancelText={t("cancel")} onHide={onHide} onSave={saveHandler}>
             <Form ref={form} onFinish={onFinish}>
                 <Form.TextInput placeholder={t("title")} border name="title"/>
                 <Form.TextArea placeholder={t("description")} border name="description" rows={15}/>

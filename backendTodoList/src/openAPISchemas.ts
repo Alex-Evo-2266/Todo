@@ -86,7 +86,12 @@ export const addSchemas = (app: FastifyInstance) => {
             completed: { type: 'boolean', examples: [false] },
             todoListId: { type: 'string', format: 'uuid' },
             createdAt: { type: 'string', format: 'date-time' },
-            updatedAt: { type: 'string', format: 'date-time' }
+            updatedAt: { type: 'string', format: 'date-time' },
+            contVersion: {type: 'integer'},
+            posVersion: {type: 'integer'},
+            runk: {type: 'string'},
+            status: {type: "string", require: false},
+            parentId: {type: "string", format: 'uuid', require: false}
         }
     })
 

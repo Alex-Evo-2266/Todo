@@ -8,6 +8,15 @@ import type { Todo, TodoList, TodoListWithTodos, TodoWithComments } from '../mod
 //   message: string;
 // }
 
+export type MoveTodoRequest = { 
+  todoList: string, 
+  id: string; 
+  posVersion: number, 
+  parentId?:string, 
+  targetTask?: string, 
+  placement: "before" | "after" | "end" | "start" 
+}
+
 // ---------- Базовый URL из спецификации ----------
 const baseUrl = '';
 
@@ -25,7 +34,7 @@ export const todoApi = createApi({
     },
   }),
   // Теги для автоматической инвалидации кэша
-  tagTypes: ['TodoList', 'Todo', 'Comment'],
+  tagTypes: ['TodoList', 'Todo', 'Comment', 'TodoListDetail'],
   endpoints: (builder) => ({
     // ----- TodoLists -----
     // GET /api-todo/todolists – получить все списки пользователя
@@ -63,7 +72,8 @@ export const todoApi = createApi({
     // GET /api-todo/todolists/{id} – получить список с задачами
     getTodoListWithTodos: builder.query<TodoListWithTodos, string>({
       query: (id) => `/api-todo/todolists/${id}`,
-      providesTags: (_, __, id) => [{ type: 'TodoList', id }],
+      providesTags: (_, __, id) => 
+      [{ type: 'TodoListDetail', id }],
     }),
 
     // DELETE /api-todo/todolists/{id} – удалить список
@@ -87,7 +97,7 @@ export const todoApi = createApi({
         body,
       }),
       invalidatesTags: (_, __, { todoListId }) => [
-        { type: 'TodoList', id: todoListId },
+        { type: 'TodoListDetail', id: todoListId },
       ],
     }),
 
@@ -104,7 +114,7 @@ export const todoApi = createApi({
         method: 'DELETE',
       }),
       invalidatesTags: (_, __, { todoListId }) => [
-        { type: 'TodoList', id: todoListId },
+        { type: 'TodoListDetail', id: todoListId },
       ],
     }),
 
@@ -127,6 +137,41 @@ export const todoApi = createApi({
       }),
       invalidatesTags: (_, __, { todoId }) => [{ type: 'Todo', id: todoId }],
     }),
+
+    moveTodo: builder.mutation<void, MoveTodoRequest>({
+      query: ({ id, placement, posVersion, parentId, targetTask }) => ({
+        url: `/api-todo/task/${id}/move`,
+        method: 'PUT',
+        body:{
+          parentId, placement, targetTask, posVersion
+        }
+      }),
+      invalidatesTags: (_, __, { todoList }) => [{ type: 'TodoListDetail', id: todoList }],
+      async onQueryStarted({ id, placement, targetTask, todoList }, { dispatch, queryFulfilled }) {
+        const patchResult = dispatch(
+          todoApi.util.updateQueryData('getTodoListWithTodos', todoList, (draft) => {
+            const sourceIndex = draft.todos.findIndex((c) => c.id === id);
+            if (sourceIndex === -1) return;
+
+            const [moved] = draft.todos.splice(sourceIndex, 1);
+
+            let targetIndex = draft.todos.findIndex((c) => c.id === targetTask);
+
+            if (placement === 'after') targetIndex++;
+            if (placement === 'start') targetIndex = 0;
+            if (placement === 'end') targetIndex = draft.todos.length;
+
+            draft.todos.splice(targetIndex, 0, moved);
+          })
+        );
+
+        try {
+          await queryFulfilled;
+        } catch {
+          patchResult.undo();
+        }
+      },
+    }),
   }),
 });
 
@@ -141,5 +186,9 @@ export const {
   useDeleteTodoMutation,
   useAddCommentMutation,
   useDeleteCommentMutation,
-  useUpdateTodoListMutation
+  useUpdateTodoListMutation,
+  useMoveTodoMutation
 } = todoApi;
+
+
+      

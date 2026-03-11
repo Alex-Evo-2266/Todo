@@ -18,6 +18,7 @@
         "dotenv": "^17.3.1",
         "fastify": "^5.7.4",
         "fastify-plugin": "^5.1.0",
+        "lexorank": "^1.0.5",
         "pg": "^8.18.0",
         "prisma": "^7.4.0"
     },
