@@ -5,7 +5,7 @@ import { EditTodoListDialog } from "./EditTodoListDialog"
 import { useCallback, useState } from "react"
 import { Menu } from "../../../shared/ui/Menu"
 import { useDeleteTodoListMutation } from "../../../entites/todos/slices/todos"
-
+import { useTranslation } from "react-i18next"
 
 type TodoListCardProps = {
     item: TodoList
@@ -14,6 +14,7 @@ type TodoListCardProps = {
 
 export const TodoListCard = ({item, active}:TodoListCardProps) => {
     const navigate = useNavigate()
+    const {t} = useTranslation()
     const [isOpenEditDialog, setOpenEditDialog] = useState(false)
     const [isOpenDeleteDialog, setOpenDeleteDialog] = useState(false)
     const [openMenu, setOpenMenu] = useState<{x: number, y:number} | null>(null)
@@ -30,10 +31,10 @@ export const TodoListCard = ({item, active}:TodoListCardProps) => {
 
     const blocks = [{
         items: [{
-            title: "edit",
+            title:  t("edit"),
             onClick: ()=>setOpenEditDialog(true),
         },{
-            title: "delete",
+            title: t("delete"),
             onClick: ()=>setOpenDeleteDialog(true)
         }]
     }]

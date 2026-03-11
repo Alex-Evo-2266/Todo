@@ -1,0 +1,9 @@
+{
+    "title_todolist": "title board",
+    "todo_title": "Todo: ",
+    "create": "Create",
+    "edit": "Edit",
+    "delete": "Delete",
+    "create_todo_list_title": "Create a task list",
+    "create_todo_list_text": "Enter the name of the task list"
+}

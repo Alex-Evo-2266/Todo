@@ -6,16 +6,18 @@ import { CreateDialog } from "./CreateDialog"
 import { useGetTodoListsQuery } from "../../../entites/todos/slices/todos"
 import { useParams } from "react-router-dom"
 import { TodoListCard } from "./TodoListCard"
+import { useTranslation } from "react-i18next"
 
 export const TodoLists = () => {
 
     const [visibleCreateDialog, setVisibleCreateDialog] = useState(false)
     const {data} = useGetTodoListsQuery()
     const {id} = useParams()
+    const {t} = useTranslation()
 
     return (
         <Panel className="todolists-panel">
-            <FilledButton style={{width: "100%"}} onClick={()=>setVisibleCreateDialog(true)}>create</FilledButton>
+            <FilledButton style={{width: "100%"}} onClick={()=>setVisibleCreateDialog(true)}>{t("create")}</FilledButton>
             <ListContainer transparent>
             {
                 data?.map((item)=>(

@@ -33,3 +33,8 @@ export interface TodoListWithTodos extends TodoList {
 export interface TodoWithComments extends Todo {
   comments: Comment[];
 }
+
+export interface CreateTodoRequest {
+  title: string;
+  description?: string;
+}

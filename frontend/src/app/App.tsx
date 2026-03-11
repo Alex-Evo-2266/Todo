@@ -1,5 +1,7 @@
 import { AuthProvider } from 'alex-evo-sh-auth'
 import { RoutesComponent } from './routs'
+import { SizeProvider, SneckbarProvider } from 'alex-evo-sh-ui-kit'
+import './i18n'
 
 function App() {
   return (
@@ -7,7 +9,11 @@ function App() {
         authUrl="/api-auth"
         authFrontendUrl="/auth-service"
     >
-      <RoutesComponent/>
+      <SneckbarProvider>
+        <SizeProvider>
+          <RoutesComponent/>
+        </SizeProvider>
+      </SneckbarProvider>
     </AuthProvider>
   )
 }

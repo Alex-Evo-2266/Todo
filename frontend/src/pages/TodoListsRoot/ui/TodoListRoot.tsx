@@ -9,7 +9,7 @@ export const TodoListRoot = () => {
     return(
         <div className="todo-list-root">
             <TodoLists/>
-            <Panel style={{marginInline: "10px"}}>
+            <Panel style={{marginLeft: "10px", flex: 1}}>
                 <Outlet/>
             </Panel>
         </div>

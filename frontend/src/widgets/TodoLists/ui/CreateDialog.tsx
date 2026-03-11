@@ -1,5 +1,6 @@
 import { TextDialog } from "alex-evo-sh-ui-kit"
 import { useCreateTodoListMutation } from "../../../entites/todos/slices/todos"
+import { useTranslation } from "react-i18next"
 
 type CreateDialogProps = {
     open: boolean
@@ -8,14 +9,15 @@ type CreateDialogProps = {
 
 export const CreateDialog = ({open, hide}:CreateDialogProps) => {
     const [request] = useCreateTodoListMutation()
+    const {t} = useTranslation()
 
     if(!open)
         return null
 
     return(
         <TextDialog
-            header="Создать список задач" 
-            text="Введите название списка задачьы" 
+            header={t("create_todo_list_title")} 
+            text={t("create_todo_list_text")}
             onSuccess={data=>request({title: data})}
             onHide={hide}
         />

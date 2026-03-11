@@ -1,0 +1,9 @@
+{
+    "title_todolist": "Название доски",
+    "todo_title": "Задача: ",
+    "create": "Создать",
+    "edit": "Изменить",
+    "delete": "Удалить",
+    "create_todo_list_title": "Создать список задачь",
+    "create_todo_list_text": "Введите название списка задачь"
+}
