@@ -1,13 +1,14 @@
 import { useParams } from "react-router-dom"
 import { useGetTodoListWithTodosQuery, useMoveTodoMutation, type MoveTodoRequest } from "../../../entites/todos/slices/todos"
-import { IconButton, ListContainer, ListItem, Plus, Typography } from "alex-evo-sh-ui-kit"
+import { IconButton, ListContainer, Plus, Typography } from "alex-evo-sh-ui-kit"
 import { useTranslation } from "react-i18next"
 import "./TodoList.scss"
 import { CreateTodoDialog } from "../../../features/CreateTodoDialog"
 import { useCallback, useState } from "react"
-import { DragDropContext, Draggable, Droppable, type DropResult } from "@hello-pangea/dnd"
+import { DragDropContext, Droppable, type DropResult } from "@hello-pangea/dnd"
 import { useError } from "../../../shared/hooks/errorMessage.hook"
 import type { Todo } from "../../../entites/todos/models/todo"
+import { TodoItem } from "../../../widgets/TodoItem"
 
 export function buildMoveColumnPayload(
   event: DropResult,
@@ -99,19 +100,7 @@ export const TodoListPage = () => {
                         <ListContainer transparent ref={provided.innerRef} {...provided.droppableProps}>
                             {
                                 data?.todos.map((item, index)=>(
-                                    <Draggable key={item.id} draggableId={`task=${item.id}`} index={index}>
-                                        {(provided2) => (
-                                            <ListItem 
-                                            onClick={()=>console.log("li")}
-                                            ref={provided2.innerRef} 
-                                            shadow={5} 
-                                            hovered 
-                                            header={`${t("todo_title")}${item.title}`}
-                                            {...provided2.draggableProps}
-                                            {...provided2.dragHandleProps}
-                                            />
-                                        )}
-                                    </Draggable>
+                                  <TodoItem key={item.id} index={index} item={item}/>  
                                 ))  
                             }
                             {provided.placeholder}

@@ -1,7 +1,7 @@
 import { authPrivilege } from "@root/hooks/authPrivilege.js";
 import { FastifyInstance } from "fastify";
 import { createTodoListSchema, createTodoSchema, deleteTodoList, editTodoListSchema, getTodoListSchema, getTodosTodoListSchemas, moveTodoSchema } from "./openApiSchemas/todolist.js";
-import { creactComment, deleteComment, deleteTodo, getTodoSchema } from "./openApiSchemas/todo.js";
+import { creactComment, deleteComment, deleteTodo, getTodoSchema, updateTodoSchema } from "./openApiSchemas/todo.js";
 import { LexoRank } from "lexorank";
 
 
@@ -474,7 +474,7 @@ app.delete<{ Params: { id: string } }>(
 );
 
     app.put<{ Body: { posVersion: number, parentId?:string, targetTask?: string,  placement:string}, Params: { id: string } }>(
-      "/task/:id/move",
+      "/todo/:id/move",
       {
         preHandler: authPrivilege("todolist:read"),
         schema: moveTodoSchema
@@ -625,6 +625,71 @@ app.delete<{ Params: { id: string } }>(
               contVersion: true,
               completed: true,
               status: true
+            }
+          })
+              // 6. Возвращаем обновлённую колонку (можно вернуть полные данные)
+              return reply.code(200).send(retData);
+
+
+        }catch(error)
+        {
+          console.log(error)
+          return reply.status(400).send({ 
+            statusCode: 400, 
+            error: 'Bad Request', 
+            message: 'Failed to update todo list' 
+          });
+        }
+      }
+    )
+
+
+    app.put<{ Body: { contVersion: number, description?:string, title?: string }, Params: { id: string } }>(
+      "/todo/:id",
+      {
+        preHandler: authPrivilege("todolist:read"),
+        schema: updateTodoSchema
+      },
+      async (req, reply) => {
+        try{
+          const userId = req.user!.id;
+          const id = req.params.id;
+          const {contVersion, description, title} = req.body
+
+          // 2. Проверяем существование перемещаемой колонки и её принадлежность доске
+          const task = await app.prisma.todo.findFirst({
+            where: {id}
+          })
+          if (!task) {
+            return reply.code(404).send({ error: 'Todo not found in this board' });
+          }
+          if (task.contVersion !== contVersion) {
+            return reply.code(409).send({
+              error: "Position conflict",
+              message: "The task has been moved by another user. Please refresh and try again.",
+              data: task
+            });
+          }
+
+          const retData = await app.prisma.todo.update({
+            where: {id: id, todoList:{
+              OR:[
+                { ownerId: userId },
+                { access: { some: { userId } } }
+              ]
+            } },
+            data: {title, description, contVersion: task.contVersion + 1},
+            select: {
+              title: true,
+              description: true,
+              runk: true,
+              id: true,
+              createdAt: true,
+              updatedAt: true,
+              posVersion: true,
+              contVersion: true,
+              completed: true,
+              status: true,
             }
           })
               // 6. Возвращаем обновлённую колонку (можно вернуть полные данные)

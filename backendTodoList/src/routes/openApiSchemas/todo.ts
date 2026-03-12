@@ -113,52 +113,121 @@ export const deleteComment = {
 }
 
 export const getTodoSchema = {
-      tags: ["Todos"],
-      summary: "Получить конкретную задачу с комментариями",
-      description:
-        "Возвращает задачу и все комментарии к ней, если пользователь имеет доступ к родительскому списку",
-      security: [{ bearerAuth: [] }],
-      params: {
+    tags: ["Todos"],
+    summary: "Получить конкретную задачу с комментариями",
+    description:
+      "Возвращает задачу и все комментарии к ней, если пользователь имеет доступ к родительскому списку",
+    security: [{ bearerAuth: [] }],
+    params: {
+      type: "object",
+      required: ["id"],
+      properties: {
+        id: {
+          type: "string",
+          format: "uuid",
+          description: "ID задачи",
+          examples: ["123e4567-e89b-12d3-a456-426614174002"],
+        },
+      },
+    },
+    response: {
+      200: {
+        description: "Задача и комментарии успешно получены",
         type: "object",
-        required: ["id"],
         properties: {
-          id: {
-            type: "string",
-            format: "uuid",
-            description: "ID задачи",
-            examples: ["123e4567-e89b-12d3-a456-426614174002"],
+          id: { type: "string", format: "uuid" },
+          title: { type: "string" },
+          description: { type: "string" },
+          completed: { type: "boolean" },
+          createdAt: { type: "string", format: "date-time" },
+          updatedAt: { type: "string", format: "date-time" },
+          todoListId: { type: "string", format: "uuid" },
+          comments: {
+            type: "array",
+            items: { $ref: "Comment#" }, // если есть схема комментария
           },
         },
       },
-      response: {
-        200: {
-          description: "Задача и комментарии успешно получены",
-          type: "object",
-          properties: {
-            id: { type: "string", format: "uuid" },
-            title: { type: "string" },
-            description: { type: "string" },
-            completed: { type: "boolean" },
-            createdAt: { type: "string", format: "date-time" },
-            updatedAt: { type: "string", format: "date-time" },
-            todoListId: { type: "string", format: "uuid" },
-            comments: {
-              type: "array",
-              items: { $ref: "Comment#" }, // если есть схема комментария
-            },
-          },
-        },
-        400: {
-          description: "Ошибка запроса",
-          content: { "application/json": { schema: { $ref: "Error#" } } },
-        },
-        401: {
-          description: "Не авторизован",
-          content: { "application/json": { schema: { $ref: "Error#" } } },
-        },
-        404: {
-          description: "Задача не найдена или доступ запрещён",
-          content: { "application/json": { schema: { $ref: "Error#" } } },
-        },
+      400: {
+        description: "Ошибка запроса",
+        content: { "application/json": { schema: { $ref: "Error#" } } },
       },
+      401: {
+        description: "Не авторизован",
+        content: { "application/json": { schema: { $ref: "Error#" } } },
+      },
+      404: {
+        description: "Задача не найдена или доступ запрещён",
+        content: { "application/json": { schema: { $ref: "Error#" } } },
+      },
+    },
+  }
+
+
+export const updateTodoSchema = {
+  tags: ['Todos'],
+  summary: 'Изменить задачу',
+  description: 'Изменяет задачу',
+  security: [{ bearerAuth: [] }],
+  params: {
+      type: 'object',
+      required: ['id'],
+      properties: {
+      id: {
+          type: 'string',
+          format: 'uuid',
+          description: 'ID списка задач',
+          examples: ['123e4567-e89b-12d3-a456-426614174000']
+      }
     }
+  },
+  body: {
+      type: 'object',
+      required: ['title'],
+      properties: {
+        title: {
+            type: 'string',
+            description: 'Название задачи',
+            minLength: 1,
+            maxLength: 200,
+            examples: ['Написать код']
+        },
+        description: {
+            type: 'string',
+            description: 'Подробное описание задачи',
+            examples: ['Реализовать API для управления задачами']
+        },
+        contVersion: {
+            type: 'integer',
+            description: 'версия',
+            examples: [1]
+        },
+      }
+  },
+  response: {
+      201: {
+      description: 'Задача успешно изменена',
+      content: {
+          'application/json': {
+          schema: { $ref: 'TodoList#' }
+          }
+      }
+      },
+      400: {
+      description: 'Ошибка валидации',
+      content: {
+          'application/json': {
+          schema: { $ref: 'Error#' }
+          }
+      }
+      },
+      401: {
+      description: 'Не авторизован',
+      content: {
+          'application/json': {
+          schema: { $ref: 'Error#' }
+          }
+      }
+    }
+  }
+}

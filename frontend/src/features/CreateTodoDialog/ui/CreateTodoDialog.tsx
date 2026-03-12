@@ -21,11 +21,12 @@ export const CreateTodoDialog = ({open, onHide, listId}:CreateDialogProps) => {
     }
 
     const onFinish = useCallback(async (data: Record<string, unknown>) => {
+        console.log(data)
         const title = data["title"]
         const description = data["description"]
         if(typeof(title) === "string" && title !== "")
         {
-            await request({ todoListId: listId, title: title, description: String(description) })
+            await request({ todoListId: listId, title: title, description: description? String(description): undefined })
             onHide()
         }
         else

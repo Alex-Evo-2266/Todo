@@ -17,6 +17,14 @@ export type MoveTodoRequest = {
   placement: "before" | "after" | "end" | "start" 
 }
 
+export type EditTodoRequest = { 
+  todoListId: string, 
+  id: string; 
+  contVersion: number
+  title: string;
+  description?: string;
+}
+
 // ---------- Базовый URL из спецификации ----------
 const baseUrl = '';
 
@@ -140,7 +148,7 @@ export const todoApi = createApi({
 
     moveTodo: builder.mutation<void, MoveTodoRequest>({
       query: ({ id, placement, posVersion, parentId, targetTask }) => ({
-        url: `/api-todo/task/${id}/move`,
+        url: `/api-todo/todo/${id}/move`,
         method: 'PUT',
         body:{
           parentId, placement, targetTask, posVersion
@@ -172,6 +180,15 @@ export const todoApi = createApi({
         }
       },
     }),
+
+    editTodo: builder.mutation<void, EditTodoRequest>({
+      query: ({ id, todoListId, ...body }) => ({
+        url: `/api-todo/todo/${id}`,
+        method: 'PUT',
+        body:body
+      }),
+      invalidatesTags: (_, __, { todoListId }) => [{ type: 'TodoListDetail', id: todoListId }],
+    })
   }),
 });
 
@@ -187,7 +204,8 @@ export const {
   useAddCommentMutation,
   useDeleteCommentMutation,
   useUpdateTodoListMutation,
-  useMoveTodoMutation
+  useMoveTodoMutation,
+  useEditTodoMutation
 } = todoApi;
 
 

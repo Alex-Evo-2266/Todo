@@ -166,7 +166,6 @@ export const createTodoSchema = {
         description: {
             type: 'string',
             description: 'Подробное описание задачи',
-            maxLength: 1000,
             examples: ['Реализовать API для управления задачами']
         }
         }
@@ -305,7 +304,7 @@ export const deleteTodoList = {
 }
 
 export const moveTodoSchema = {
-    tags: ['Todo'],
+    tags: ['Todos'],
     summary: 'Переместить задачу',
     description: 'Изменяет порядок задач',
     security: [{ bearerAuth: [] }],
