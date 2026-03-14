@@ -69,8 +69,8 @@ export const TodoListCard = ({item, active}:TodoListCardProps) => {
             {
             isOpenDeleteDialog && 
             <BaseDialog 
-                header="Удалить доску" 
-                text="Вы уверены что хотите удалить доску" 
+                header={t("delete_board_head")}
+                text={t("delete_board_text")}
                 onSuccess={deleteHandler}
                 onHide={()=>setOpenDeleteDialog(false)}
             />

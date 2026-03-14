@@ -4,6 +4,8 @@ import { useTranslation } from "react-i18next"
 import { useError } from "../../../shared/hooks/errorMessage.hook"
 import { useDeleteTodoMutation, useEditTodoMutation } from "../../../entites/todos/slices/todos"
 import type { Todo } from "../../../entites/todos/models/todo"
+import { combineToDate, formatDate, formatTime } from "../../../shared/helpers/date"
+import './EditTodo.scss'
 
 type EditDialogProps = {
     onHide: () => void
@@ -30,6 +32,8 @@ export const EditTodoDialog = ({onHide, todo}:EditDialogProps) => {
         const title = data["title"]
         const description = data["description"]
         const date = data['date']
+        const timeU = data['time'] 
+        const time = typeof(timeU) === "string"? timeU: undefined
         if(typeof(title) === "string" && title !== "")
         {
             await request({ 
@@ -38,7 +42,7 @@ export const EditTodoDialog = ({onHide, todo}:EditDialogProps) => {
                 title: title, 
                 description: String(description), 
                 contVersion: todo.contVersion,
-                date: date? new Date(String(date)).toISOString(): undefined
+                date: date && typeof(date) === "string"? combineToDate(date, time).toISOString(): undefined
             })
             onHide()
         }
@@ -46,13 +50,23 @@ export const EditTodoDialog = ({onHide, todo}:EditDialogProps) => {
             message(t("invalid data"))
     },[message, request, onHide, todo])
 
+    const value = {
+        title: todo.title, 
+        description: todo.description, 
+        date: formatDate(new Date(todo.date)),
+        time: formatTime(new Date(todo.date))
+    }
+
 
     return(
         <>
-            <Form ref={form} onFinish={onFinish} value={{title: todo.title, description: todo.description, date: todo.date !== "" ? new Date(todo.date).toLocaleDateString("sv-SE"):undefined}}>
+            <Form ref={form} onFinish={onFinish} value={value}>
                 <Form.TextInput placeholder={t("title")} border name="title"/>
                 <Form.TextArea placeholder={t("description")} border name="description" rows={15}/>
-                <Form.DateField container={document.getElementById("modal")} placeholder={t("finaly_date")} border name="date"/>
+                <div className="flex-field">
+                    <Form.DateField className="flex-field__field" container={document.getElementById("modal")} placeholder={t("finaly_date")} border name="date"/>
+                    <Form.TimeField className="flex-field__field" container={document.getElementById("modal")} placeholder={t("finaly_time")} border name="time"/>
+                </div>
             </Form>
             <div style={{display: 'flex', gap: "10px", justifyContent: "end"}}>
                 <DangerButton 

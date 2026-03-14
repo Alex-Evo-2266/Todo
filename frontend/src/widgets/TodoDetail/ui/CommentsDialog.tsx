@@ -41,7 +41,7 @@ export const CommentTodoDialog = ({todo}:CommentsDialogProps) => {
 
     return(
         <div className="comment-page">
-            <ListContainer ref={ul} scroll maxHeight="300px">
+            <ListContainer className="comment-page__list" ref={ul} scroll maxHeight="300px">
             {
                 todo.comments.map((item)=>{
                     return (

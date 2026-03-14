@@ -30,7 +30,7 @@ export const CreateTodoDialog = ({open, onHide, listId}:CreateDialogProps) => {
             onHide()
         }
         else
-            message(t("invalid data"))
+            message(t("invalid_data"))
     },[message, request, onHide])
 
     if(!open)

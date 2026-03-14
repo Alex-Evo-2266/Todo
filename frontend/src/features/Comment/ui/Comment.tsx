@@ -38,6 +38,7 @@ export const Comment = ({data: item}: CommentProps) => {
     return (
         <>
         <ListItem
+            className="comment-item"
             icon={<div className="avatar" style={{background: color}}>{letter}</div>}
             header={item.text}
             style={{backgroundColor: auth?.user?.user_id === item.authorId? "var(--Primary-container-color)": undefined}}

@@ -7,4 +7,9 @@
             flex: 1;
         }
     }
+    &__list{
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+    }
 }

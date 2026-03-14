@@ -4,8 +4,35 @@
     "create": "Создать",
     "edit": "Изменить",
     "delete": "Удалить",
+    "save": "Сохранить",
+    "invalid_data": "Не верные данные",
+    "cancel": "Отмена",
+    "title": "Название",
+    "description": "Описание",
+
+    "finaly_date": "дата выполнения",
+    "finaly_time": "время выполнения",
+
     "create_todo_list_title": "Создать список задачь",
     "create_todo_list_text": "Введите название списка задачь",
     "create_task": "Создать задачу",
-    "edit_task": "Изменить задачу"
+
+    "edit_task": "Изменить задачу",
+
+    "delete_comment_head": "Удалить комментарий",
+    "delete_comment_text": "Вы уверены что хотите удалить комментарий?",
+
+    "input_comment": "Напишите комментарий",
+
+    "confirm_delete_header": "Удаление",
+    "confirm_delete_text": "Вы уверены что хотите удалить элемент",
+
+    "edit_tab": "Редактирование",
+    "comment_tab": "Комментарии",
+
+    "delete_board_head": "Удалить доску",
+    "delete_board_text": "Вы уверены что хотите удалить доску",
+    "edit_board-head": "Изменить название списка задач",
+    "edit_board-text": "Введите название списка задач" 
+
 }
