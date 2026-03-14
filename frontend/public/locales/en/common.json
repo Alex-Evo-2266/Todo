@@ -6,5 +6,6 @@
     "delete": "Delete",
     "create_todo_list_title": "Create a task list",
     "create_todo_list_text": "Enter the name of the task list",
-    "create_task": "Create task"
+    "create_task": "Create task",
+    "edit_task": "Edit task"
 }

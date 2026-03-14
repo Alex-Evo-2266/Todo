@@ -88,6 +88,7 @@ export const addSchemas = (app: FastifyInstance) => {
             createdAt: { type: 'string', format: 'date-time' },
             updatedAt: { type: 'string', format: 'date-time' },
             contVersion: {type: 'integer'},
+            date: { type: 'string', format: 'date-time' },
             posVersion: {type: 'integer'},
             runk: {type: 'string'},
             status: {type: "string", require: false},

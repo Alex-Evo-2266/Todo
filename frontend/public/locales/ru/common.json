@@ -6,5 +6,6 @@
     "delete": "Удалить",
     "create_todo_list_title": "Создать список задачь",
     "create_todo_list_text": "Введите название списка задачь",
-    "create_task": "Создать задачу"
+    "create_task": "Создать задачу",
+    "edit_task": "Изменить задачу"
 }

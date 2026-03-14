@@ -3,10 +3,12 @@ import { setupListeners } from '@reduxjs/toolkit/query';
 import { persistReducer, persistStore } from 'redux-persist';
 import storage from 'redux-persist/es/storage';
 import { todoApi } from '../entites/todos/slices/todos';
+import { userApi } from '../entites/users/slices/user';
 
 
 const rootReducer = combineReducers({
   [todoApi.reducerPath]: todoApi.reducer,
+  [userApi.reducerPath]: userApi.reducer
 });
 
 const persistConfig = {
@@ -22,7 +24,7 @@ export const store = configureStore({
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
       serializableCheck: false,
-    }).concat(todoApi.middleware),
+    }).concat(todoApi.middleware).concat(userApi.middleware),
 });
 
 setupListeners(store.dispatch);

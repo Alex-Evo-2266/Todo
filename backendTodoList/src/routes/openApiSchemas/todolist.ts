@@ -341,7 +341,8 @@ export const moveTodoSchema = {
                 format: 'uuid',
                 examples: ['123e4567-e89b-12d3-a456-426614174000']
             },
-            placement: { type: 'string', enum:['before', 'after','start', 'end'] }
+            placement: { type: 'string', enum:['before', 'after','start', 'end'] },
+            date: { type: 'string', format: 'date-time' },
         }
     },
     response: {

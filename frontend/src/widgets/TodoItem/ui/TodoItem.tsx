@@ -3,25 +3,22 @@ import { ListItem } from "alex-evo-sh-ui-kit"
 import { useTranslation } from "react-i18next"
 import { Draggable } from "@hello-pangea/dnd"
 import type { Todo } from "../../../entites/todos/models/todo"
-import { EditTodoDialog } from "../../../features/EditTodoDialog"
-import { useState } from "react"
 
 type TodoItemProps = {
     item: Todo
     index: number
+    onClick: () => void
 }
 
-export const TodoItem = ({item, index}:TodoItemProps) => {
+export const TodoItem = ({item, index, onClick}:TodoItemProps) => {
 
     const {t} = useTranslation()
-    const [isOpenEditDialog, setOpenEditDialog] = useState(false)
 
     return (
-        <>
         <Draggable draggableId={`task=${item.id}`} index={index}>
             {(provided2) => (
                 <ListItem
-                onClick={()=>setOpenEditDialog(true)}
+                onClick={onClick}
                 ref={provided2.innerRef} 
                 shadow={5} 
                 hovered 
@@ -31,8 +28,5 @@ export const TodoItem = ({item, index}:TodoItemProps) => {
                 />
             )}
         </Draggable>
-        <EditTodoDialog todo={item} open={isOpenEditDialog} onHide={()=>setOpenEditDialog(false)}/>
-        </>
-        
     )
 }

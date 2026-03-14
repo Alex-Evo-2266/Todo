@@ -1,6 +1,7 @@
 // todoApi.ts
-import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
+import { createApi } from '@reduxjs/toolkit/query/react';
 import type { Todo, TodoList, TodoListWithTodos, TodoWithComments } from '../models/todo';
+import { baseQueryWithReauth } from './baseQuery';
 
 // interface ErrorResponse {
 //   statusCode: number;
@@ -23,24 +24,13 @@ export type EditTodoRequest = {
   contVersion: number
   title: string;
   description?: string;
+  date?: string
 }
 
-// ---------- Базовый URL из спецификации ----------
-const baseUrl = '';
 
 export const todoApi = createApi({
   reducerPath: 'todoApi',
-  baseQuery: fetchBaseQuery({
-    baseUrl,
-    prepareHeaders: (headers, { getState }) => {
-      // Предполагаем, что токен хранится в слайсе auth (например, auth.token)
-      const token = (getState() as any).auth?.token;
-      if (token) {
-        headers.set('Authorization', `Bearer ${token}`);
-      }
-      return headers;
-    },
-  }),
+  baseQuery: baseQueryWithReauth,
   // Теги для автоматической инвалидации кэша
   tagTypes: ['TodoList', 'Todo', 'Comment', 'TodoListDetail'],
   endpoints: (builder) => ({
@@ -121,8 +111,9 @@ export const todoApi = createApi({
         url: `/api-todo/todos/${id}`,
         method: 'DELETE',
       }),
-      invalidatesTags: (_, __, { todoListId }) => [
+      invalidatesTags: (_, __, { todoListId, id }) => [
         { type: 'TodoListDetail', id: todoListId },
+        { type: 'Todo', id }
       ],
     }),
 
@@ -187,7 +178,7 @@ export const todoApi = createApi({
         method: 'PUT',
         body:body
       }),
-      invalidatesTags: (_, __, { todoListId }) => [{ type: 'TodoListDetail', id: todoListId }],
+      invalidatesTags: (_, __, { todoListId, id }) => [{ type: 'TodoListDetail', id: todoListId }, { type: 'Todo', id }],
     })
   }),
 });

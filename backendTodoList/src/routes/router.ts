@@ -216,7 +216,7 @@ export function route(app: FastifyInstance)
         try{
           const userId = req.user!.id;
           const { id } = req.params;
-          const todo = app.prisma.todo.findFirst({
+          const todo = await app.prisma.todo.findFirst({
             where: {
               id,
               todoList: {
@@ -238,7 +238,6 @@ export function route(app: FastifyInstance)
             message: "Todo not found or access denied",
           });
         }
-
         return reply.status(200).send(todo);
       }
       catch (error) {
@@ -413,7 +412,7 @@ app.delete<{ Params: { id: string } }>(
 app.delete<{ Params: { id: string } }>(
   "/comments/:id",
   {
-    preHandler: authPrivilege("comment:delete"),
+    preHandler: authPrivilege("todolist:comment"),
     schema: deleteComment,
   },
   async (req, reply) => {
@@ -644,7 +643,7 @@ app.delete<{ Params: { id: string } }>(
     )
 
 
-    app.put<{ Body: { contVersion: number, description?:string, title?: string }, Params: { id: string } }>(
+    app.put<{ Body: { contVersion: number, description?:string, title?: string, date?: string }, Params: { id: string } }>(
       "/todo/:id",
       {
         preHandler: authPrivilege("todolist:read"),
@@ -654,7 +653,7 @@ app.delete<{ Params: { id: string } }>(
         try{
           const userId = req.user!.id;
           const id = req.params.id;
-          const {contVersion, description, title} = req.body
+          const {contVersion, description, title, date} = req.body
 
           // 2. Проверяем существование перемещаемой колонки и её принадлежность доске
           const task = await app.prisma.todo.findFirst({
@@ -671,6 +670,10 @@ app.delete<{ Params: { id: string } }>(
             });
           }
 
+          const updateData: Record<string, unknown> = {title, contVersion: task.contVersion + 1}
+          updateData.description = description
+          updateData.date = date
+
           const retData = await app.prisma.todo.update({
             where: {id: id, todoList:{
               OR:[
@@ -678,7 +681,7 @@ app.delete<{ Params: { id: string } }>(
                 { access: { some: { userId } } }
               ]
             } },
-            data: {title, description, contVersion: task.contVersion + 1},
+            data: updateData,
             select: {
               title: true,
               description: true,

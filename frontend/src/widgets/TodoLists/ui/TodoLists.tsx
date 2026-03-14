@@ -17,8 +17,8 @@ export const TodoLists = () => {
 
     return (
         <Panel className="todolists-panel">
-            <FilledButton style={{width: "100%"}} onClick={()=>setVisibleCreateDialog(true)}>{t("create")}</FilledButton>
-            <ListContainer transparent>
+            <FilledButton size="medium" style={{width: "100%"}} onClick={()=>setVisibleCreateDialog(true)}>{t("create")}</FilledButton>
+            <ListContainer className="todolists-panel__list" transparent>
             {
                 data?.map((item)=>(
                     <TodoListCard item={item} key={item.id} active={item.id === id}/>

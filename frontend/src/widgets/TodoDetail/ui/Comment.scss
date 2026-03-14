@@ -1,0 +1,10 @@
+.comment-page{
+    &__input-container{
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        &__input{
+            flex: 1;
+        }
+    }
+}

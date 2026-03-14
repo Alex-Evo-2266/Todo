@@ -20,6 +20,7 @@ export interface Todo {
   runk: string
   status: string
   parentId: string
+  date: string
 }
 
 export interface Comment {
