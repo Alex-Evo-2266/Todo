@@ -16,3 +16,14 @@
         }
     }
 }
+
+.boards-btn{
+    position: relative;
+    &__icon{
+        position: absolute;
+        left: 20px;
+        --icon-primary: var(--On-primary-container-color);
+        top: 50%;
+        transform: translateY(-50%);
+    }
+}

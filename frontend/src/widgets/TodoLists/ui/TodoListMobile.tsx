@@ -1,4 +1,4 @@
-import { FilledButton, ListContainer, Panel } from "alex-evo-sh-ui-kit"
+import { BottomSheetsUi, Button, ListContainer, MenuIcon } from "alex-evo-sh-ui-kit"
 
 import './TodoLists.scss'
 import { useState } from "react"
@@ -8,27 +8,33 @@ import { TodoListCard } from "./TodoListCard"
 import { useTranslation } from "react-i18next"
 import { CreateDialog } from "../../../features/CreactTodoListDialog"
 
-export const TodoLists = () => {
+export const TodoListsMobile = () => {
 
     const [visibleCreateDialog, setVisibleCreateDialog] = useState(false)
+    const [isOpenList, setOpenList] = useState(false)
     const {data} = useGetTodoListsQuery()
     const {id} = useParams()
     const {t} = useTranslation()
 
     return (
-        <Panel className="todolists-panel">
-            <FilledButton size="medium" style={{width: "100%"}} onClick={()=>setVisibleCreateDialog(true)}>{t("create")}</FilledButton>
+        <>
+        <Button onClick={()=>setOpenList(true)} className="boards-btn" styleType="filledTotal">
+            <MenuIcon className="boards-btn__icon"/>
+            {t("boards")}
+        </Button>
+        <BottomSheetsUi visible={isOpenList} onHide={()=>setOpenList(false)}>
             <ListContainer className="todolists-panel__list" transparent>
             {
                 data?.map((item)=>(
-                    <TodoListCard item={item} key={item.id} active={item.id === id}/>
+                    <TodoListCard item={item} key={item.id} active={item.id === id} onHide={()=>setOpenList(false)}/>
                 ))
             }
             </ListContainer>
-            <CreateDialog
+        </BottomSheetsUi>
+        <CreateDialog
                 open={visibleCreateDialog}
                 hide={()=>setVisibleCreateDialog(false)}
             />
-        </Panel>
+        </>
     )
 }

@@ -1,18 +1,19 @@
 import { BaseDialog, IconButton, ListItem, MoreVertical } from "alex-evo-sh-ui-kit"
 import type { TodoList } from "../../../entites/todos/models/todo"
 import { useNavigate } from "react-router-dom"
-import { EditTodoListDialog } from "./EditTodoListDialog"
 import { useCallback, useState } from "react"
 import { Menu } from "../../../shared/ui/Menu"
 import { useDeleteTodoListMutation } from "../../../entites/todos/slices/todos"
 import { useTranslation } from "react-i18next"
+import { EditTodoListDialog } from "../../../features/EditTodoListDialog"
 
 type TodoListCardProps = {
     item: TodoList
     active: boolean
+    onHide?: ()=>void
 }
 
-export const TodoListCard = ({item, active}:TodoListCardProps) => {
+export const TodoListCard = ({item, active, onHide}:TodoListCardProps) => {
     const navigate = useNavigate()
     const {t} = useTranslation()
     const [isOpenEditDialog, setOpenEditDialog] = useState(false)
@@ -20,10 +21,11 @@ export const TodoListCard = ({item, active}:TodoListCardProps) => {
     const [openMenu, setOpenMenu] = useState<{x: number, y:number} | null>(null)
     const [request] = useDeleteTodoListMutation()
 
-    const toglePath = (e:React.MouseEvent<HTMLLIElement>, id:string) => {
+    const toglePath = useCallback((e:React.MouseEvent<HTMLLIElement>, id:string) => {
         e.stopPropagation()
         navigate(`/todo/${id}`)
-    }
+        onHide?.()
+    },[onHide, navigate])
 
     const deleteHandler = useCallback(() => {
         request(item.id)
@@ -61,7 +63,7 @@ export const TodoListCard = ({item, active}:TodoListCardProps) => {
                 blocks={blocks} 
                 visible={!!openMenu} x={openMenu?.x ?? 0} y={openMenu?.y ?? 0}
             />
-            <EditTodoListDialog 
+            <EditTodoListDialog
                 data={item} 
                 open={isOpenEditDialog} 
                 hide={()=>setOpenEditDialog(false)}
