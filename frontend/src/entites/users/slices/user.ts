@@ -1,5 +1,6 @@
 // todoApi.ts
-import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
+import { createApi } from '@reduxjs/toolkit/query/react';
+import { baseQueryWithReauth } from '../../../shared/helpers/baseQuery';
 
 export type User = { 
   id: string; 
@@ -9,20 +10,10 @@ export type User = {
 }
 
 // ---------- Базовый URL из спецификации ----------
-const baseUrl = '';
 
 export const userApi = createApi({
   reducerPath: 'userApi',
-  baseQuery: fetchBaseQuery({
-    baseUrl,
-    prepareHeaders: (headers, { getState }) => {
-      const token = (getState() as any).auth?.token;
-      if (token) {
-        headers.set('Authorization', `Bearer ${token}`);
-      }
-      return headers;
-    },
-  }),
+  baseQuery: baseQueryWithReauth,
   tagTypes: ['User'],
   endpoints: (builder) => ({
     // ----- User -----

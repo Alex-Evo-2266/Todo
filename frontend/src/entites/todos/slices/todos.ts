@@ -1,13 +1,7 @@
 // todoApi.ts
 import { createApi } from '@reduxjs/toolkit/query/react';
 import type { Todo, TodoList, TodoListWithTodos, TodoWithComments } from '../models/todo';
-import { baseQueryWithReauth } from './baseQuery';
-
-// interface ErrorResponse {
-//   statusCode: number;
-//   error: string;
-//   message: string;
-// }
+import { baseQueryWithReauth } from '../../../shared/helpers/baseQuery';
 
 export type MoveTodoRequest = { 
   todoList: string, 

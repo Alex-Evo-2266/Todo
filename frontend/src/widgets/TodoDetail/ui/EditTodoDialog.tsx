@@ -12,8 +12,15 @@ type EditDialogProps = {
     todo: Todo
 }
 
+type EditDitailForm = {
+    title: string
+    description?: string
+    date?: string
+    time?: string
+}
+
 export const EditTodoDialog = ({onHide, todo}:EditDialogProps) => {
-    const form = useRef<FormRef>(null)
+    const form = useRef<FormRef<EditDitailForm>>(null)
     const [request, {error, isError}] = useEditTodoMutation()
     const [requestDelete, {error: errorDelete, isError: isErrorDelete}] = useDeleteTodoMutation()
     useError({error, isError})
@@ -28,7 +35,7 @@ export const EditTodoDialog = ({onHide, todo}:EditDialogProps) => {
         requestDelete({id: todo.id, todoListId: todo.todoListId})
     },[requestDelete, todo])
 
-    const onFinish = useCallback(async (data: Record<string, unknown>) => {
+    const onFinish = useCallback(async (data: EditDitailForm) => {
         const title = data["title"]
         const description = data["description"]
         const date = data['date']
@@ -50,7 +57,7 @@ export const EditTodoDialog = ({onHide, todo}:EditDialogProps) => {
             message(t("invalid data"))
     },[message, request, onHide, todo])
 
-    const value = {
+    const value:EditDitailForm = {
         title: todo.title, 
         description: todo.description, 
         date: formatDate(new Date(todo.date)),
@@ -60,7 +67,7 @@ export const EditTodoDialog = ({onHide, todo}:EditDialogProps) => {
 
     return(
         <>
-            <Form ref={form} onFinish={onFinish} value={value}>
+            <Form<EditDitailForm> ref={form} onFinish={onFinish} value={value}>
                 <Form.TextInput placeholder={t("title")} border name="title"/>
                 <Form.TextArea placeholder={t("description")} border name="description" rows={15}/>
                 <div className="flex-field">

@@ -14,14 +14,14 @@ type CommentsDialogProps = {
 
 export const CommentTodoDialog = ({todo}:CommentsDialogProps) => {
     
-    const form = useRef<FormRef>(null)
+    const form = useRef<FormRef<{comment: string}>>(null)
     const ul = useRef<HTMLUListElement>(null)
     const {t} = useTranslation()
     const [addComment, {error, isError}] = useAddCommentMutation()
     useError({error, isError})
 
-    const sendComment = useCallback(async(data: Record<string, unknown>) => {
-        const comment = data["comment"]
+    const sendComment = useCallback(async(data: {comment: string}) => {
+        const comment = data.comment
         if(comment && typeof(comment) === 'string'){
             await addComment({todoId: todo.id, text:comment})
             ul.current?.scrollIntoView({behavior: "smooth"})
@@ -50,7 +50,7 @@ export const CommentTodoDialog = ({todo}:CommentsDialogProps) => {
                 })
             }
             </ListContainer>
-            <Form className="comment-page__input-container" ref={form} onFinish={sendComment}>
+            <Form<{comment: string}> className="comment-page__input-container" ref={form} onFinish={sendComment} value={{comment:""}}>
                 <Form.TextInput name="comment" className="comment-page__input-container__input" border placeholder={t("input_comment")}/>
                 <IconButton icon={<ArrowUp/>} onClick={submite}/>
             </Form>

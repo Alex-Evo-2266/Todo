@@ -12,7 +12,7 @@ i18n
     defaultNS: "common",
 
     backend: {
-      loadPath: "/todo/locales/{{lng}}/{{ns}}.json"
+      loadPath: "/todo-service/locales/{{lng}}/{{ns}}.json"
     },
 
     interpolation: {

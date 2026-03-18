@@ -52,13 +52,13 @@ services:
       - "traefik.http.routers.todo_http.rule=PathPrefix(`/api-todo`)"
       - "traefik.http.routers.todo_http.entrypoints=web"
       - "traefik.http.routers.todo_http.service=todo"
-      - "traefik.http.routers.todo_http.middlewares=auth_sso@docker"
+      - "traefik.http.routers.todo_http.middlewares=auth_oauth@docker"
       # https (с TLS)
       - "traefik.http.routers.todo_https.rule=PathPrefix(`/api-todo`)"
       - "traefik.http.routers.todo_https.entrypoints=websecure"
       - "traefik.http.routers.todo_https.tls=true"
       - "traefik.http.routers.todo_https.service=todo"
-      - "traefik.http.routers.todo_https.middlewares=auth_sso@docker"
+      - "traefik.http.routers.todo_https.middlewares=auth_oauth@docker"
       # общий сервис
       - "traefik.http.services.todo.loadbalancer.server.port=3000"
   
@@ -69,19 +69,22 @@ services:
     build:
       context: frontend        
       dockerfile: Dockerfile
+      args:
+        VITE_TODO_CLIENT_ID: ${TODO_CLIENT_ID}
+        VITE_API_AUTH: ${API_AUTH}
     restart: always
     labels:
       - "traefik.enable=true"
-      - "traefik.http.middlewares.todo_frontend_strip.stripprefix.prefixes=/todo"
+      - "traefik.http.middlewares.todo_frontend_strip.stripprefix.prefixes=/todo-service"
       # http
-      - "traefik.http.routers.todo_frontend_http.rule=PathPrefix(`/todo`)"
+      - "traefik.http.routers.todo_frontend_http.rule=PathPrefix(`/todo-service`)"
       - "traefik.http.routers.todo_frontend_http.entrypoints=web"
       - "traefik.http.routers.todo_frontend_http.service=todo_frontend"
       - "traefik.http.routers.todo_frontend_http.priority=1"
       - "traefik.http.routers.todo_frontend_http.middlewares=todo_frontend_strip"
 
       # https
-      - "traefik.http.routers.todo_frontend_https.rule=PathPrefix(`/todo`)"
+      - "traefik.http.routers.todo_frontend_https.rule=PathPrefix(`/todo-service`)"
       - "traefik.http.routers.todo_frontend_https.entrypoints=websecure"
       - "traefik.http.routers.todo_frontend_https.tls=true"
       - "traefik.http.routers.todo_frontend_https.service=todo_frontend"

@@ -6,6 +6,7 @@ import { Menu } from "../../../shared/ui/Menu"
 import { useDeleteTodoListMutation } from "../../../entites/todos/slices/todos"
 import { useTranslation } from "react-i18next"
 import { EditTodoListDialog } from "../../../features/EditTodoListDialog"
+import { ROOT_URL } from "../../../app/config"
 
 type TodoListCardProps = {
     item: TodoList
@@ -23,7 +24,7 @@ export const TodoListCard = ({item, active, onHide}:TodoListCardProps) => {
 
     const toglePath = useCallback((e:React.MouseEvent<HTMLLIElement>, id:string) => {
         e.stopPropagation()
-        navigate(`/todo/${id}`)
+        navigate(`${ROOT_URL}/todo/${id}`)
         onHide?.()
     },[onHide, navigate])
 

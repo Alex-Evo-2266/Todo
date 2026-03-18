@@ -1,30 +1,26 @@
-import { AuthGuard, useAuth } from "alex-evo-sh-auth"
+import { CallbackPage, ProtectGate, useAuth } from "alex-evo-sh-auth"
 import { Navigate, Route, Routes } from "react-router-dom";
 import { TodoListRoot } from "../pages/TodoListsRoot";
 import { TodoListPage } from "../pages/Todolist";
+import { ROOT_URL } from "./config";
 
 export const RoutesComponent = ()=>{
 
-	const { isAuthenticated, loading } = useAuth();
-
-	// useEffect(()=>{
-	// 	console.log(`auth data ${isAuthenticated} ${JSON.stringify(user)}`)
-	// },[isAuthenticated, user])
+	const { loading } = useAuth();
 
 	if (loading) return <p>Загрузка...</p>;
 
-	if (!isAuthenticated) return <p>Перенаправление на логин...</p>;
-
 	return (
-		<AuthGuard>
             <Routes>
-                <Route path="/todo" element={<TodoListRoot/>}>
-                    <Route path=":id" element={<TodoListPage/>}/>
-                    <Route path="*" element={<Navigate replace to="/todo" />} />
-                </Route>
+				<Route path={ROOT_URL}>
+					<Route path="callback" element={<CallbackPage/>}/>
+					<Route element={<ProtectGate/>}>
+						<Route path="todo" element={<TodoListRoot/>}>
+							<Route path=":id" element={<TodoListPage/>}/>
+							<Route path="*" element={<Navigate replace to="/todo" />} />
+						</Route>
+					</Route>
+				</Route>
             </Routes>
-		</AuthGuard>
-
-		
 	)
 }

@@ -10,8 +10,13 @@ type CreateDialogProps = {
     listId: string
 }
 
+type FormData = {
+    title: string
+    description: string
+}
+
 export const CreateTodoDialog = ({open, onHide, listId}:CreateDialogProps) => {
-    const form = useRef<FormRef>(null)
+    const form = useRef<FormRef<FormData>>(null)
     const [request, {error, isError}] = useCreateTodoMutation()
     const message = useError({error, isError})
     const {t} = useTranslation()
@@ -20,10 +25,9 @@ export const CreateTodoDialog = ({open, onHide, listId}:CreateDialogProps) => {
         form.current?.submit()
     }
 
-    const onFinish = useCallback(async (data: Record<string, unknown>) => {
-        console.log(data)
-        const title = data["title"]
-        const description = data["description"]
+    const onFinish = useCallback(async (data: FormData) => {
+        const title = data.title
+        const description = data.description
         if(typeof(title) === "string" && title !== "")
         {
             await request({ todoListId: listId, title: title, description: description? String(description): undefined })
@@ -38,7 +42,7 @@ export const CreateTodoDialog = ({open, onHide, listId}:CreateDialogProps) => {
 
     return(
         <FullScreenTemplateDialog header={t("create_task")} saveText={t("save")} cancelText={t("cancel")} onHide={onHide} onSave={saveHandler}>
-            <Form ref={form} onFinish={onFinish}>
+            <Form<FormData> ref={form} onFinish={onFinish} value={{title: "", description: ""}}>
                 <Form.TextInput placeholder={t("title")} border name="title"/>
                 <Form.TextArea placeholder={t("description")} border name="description" rows={15}/>
             </Form>
