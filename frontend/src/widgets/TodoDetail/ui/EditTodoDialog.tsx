@@ -27,6 +27,9 @@ export const EditTodoDialog = ({onHide, todo}:EditDialogProps) => {
     const message = useError({error: errorDelete, isError: isErrorDelete})
     const {t} = useTranslation()
 
+    const enableTime = false
+    const enableDate = true
+
     const saveHandler = () => {
         form.current?.submit()
     }
@@ -41,6 +44,35 @@ export const EditTodoDialog = ({onHide, todo}:EditDialogProps) => {
         const date = data['date']
         const timeU = data['time'] 
         const time = typeof(timeU) === "string"? timeU: undefined
+        let dataTime: string | undefined = undefined
+        function isValidDatePart(date?: string) {
+            return date && !date.includes("NaN")
+        }
+
+        function isValidTimePart(time?: string) {
+            return time && !time.includes("NaN")
+        }
+
+        const hasValidDate = isValidDatePart(date)
+        const hasValidTime = isValidTimePart(time)
+
+        if (hasValidDate || hasValidTime) {
+            try {
+                const combined = hasValidDate && date ? combineToDate(
+                    date,
+                    hasValidTime ? time : undefined
+                ): undefined
+
+                const iso = combined?.toISOString()
+
+                if (iso && !isNaN(new Date(iso).getTime())) {
+                dataTime = iso
+                }
+            } catch {
+                dataTime = undefined
+            }
+        }
+        console.log(timeU, date, dataTime)
         if(typeof(title) === "string" && title !== "")
         {
             await request({ 
@@ -49,7 +81,7 @@ export const EditTodoDialog = ({onHide, todo}:EditDialogProps) => {
                 title: title, 
                 description: String(description), 
                 contVersion: todo.contVersion,
-                date: date && typeof(date) === "string"? combineToDate(date, time).toISOString(): undefined
+                date: dataTime
             })
             onHide()
         }
@@ -71,8 +103,8 @@ export const EditTodoDialog = ({onHide, todo}:EditDialogProps) => {
                 <Form.TextInput placeholder={t("title")} border name="title"/>
                 <Form.TextArea placeholder={t("description")} border name="description" rows={15}/>
                 <div className="flex-field">
-                    <Form.DateField className="flex-field__field" container={document.getElementById("modal")} placeholder={t("finaly_date")} border name="date"/>
-                    <Form.TimeField className="flex-field__field" container={document.getElementById("modal")} placeholder={t("finaly_time")} border name="time"/>
+                    <Form.DateField disabled={!enableDate} className="flex-field__field" container={document.getElementById("modal")} placeholder={t("finaly_date")} border name="date"/>
+                    {enableTime && <Form.TimeField className="flex-field__field" container={document.getElementById("modal")} placeholder={t("finaly_time")} border name="time"/>}
                 </div>
             </Form>
             <div style={{display: 'flex', gap: "10px", justifyContent: "end"}}>

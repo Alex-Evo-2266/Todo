@@ -1,18 +1,65 @@
-.avatar{
-    width: 36px;
-    height: 36px;
-
+.comment {
     display: flex;
-    align-items: center;
-    justify-content: center;
+    gap: 8px;
+    padding: 4px 8px;
 
-    border-radius: 50%;
+    &--own {
+        justify-content: flex-end;
+    }
 
-    background: var(--Primary-color);
-    color: white;
+    &__avatar {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        font-size: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #fff;
+        flex-shrink: 0;
+    }
 
-    font-weight: 600;
-    font-size: 14px;
+    &__bubble {
+        max-width: 70%;
+        padding: 8px 10px;
+        border-radius: 14px;
+        background: var(--Surface-container-high-color);
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        position: relative;
+    }
 
-    user-select: none;
+    /* свои сообщения */
+    &--own &__bubble {
+        background: var(--Primary-color);
+        color: var(--On-primary-color);
+        border-bottom-right-radius: 6px;
+    }
+
+    /* чужие */
+    &:not(.comment--own) &__bubble {
+        border-bottom-left-radius: 6px;
+    }
+
+    &__author {
+        font-size: 11px;
+        opacity: 0.7;
+    }
+
+    &__text {
+        font-size: 14px;
+        line-height: 1.4;
+        word-break: break-word;
+    }
+
+    &__meta {
+        display: flex;
+        justify-content: flex-end;
+    }
+
+    &__time {
+        font-size: 10px;
+        opacity: 0.6;
+    }
 }

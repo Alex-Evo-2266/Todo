@@ -237,3 +237,69 @@ export const updateTodoSchema = {
     }
   }
 }
+
+
+export const updateCheckTodoSchema = {
+  tags: ['Todos'],
+  summary: 'Изменить статус задачи',
+  description: 'Изменяет статус задачи',
+  security: [{ bearerAuth: [] }],
+  params: {
+      type: 'object',
+      required: ['id'],
+      properties: {
+      id: {
+          type: 'string',
+          format: 'uuid',
+          description: 'ID списка задач',
+          examples: ['123e4567-e89b-12d3-a456-426614174000']
+      }
+    }
+  },
+  body: {
+      type: 'object',
+      required: ['contVersion'],
+      properties: {
+        check: {
+            type: 'boolean',
+            description: 'статус',
+        },
+        contVersion: {
+            type: 'integer',
+            description: 'версия',
+            examples: [1]
+        },
+        posVersion: {
+            type: 'integer',
+            description: 'версия позиции',
+            examples: [1]
+        },
+      }
+  },
+  response: {
+      201: {
+      description: 'Задача успешно изменена',
+      content: {
+          'application/json': {
+          schema: { $ref: 'TodoList#' }
+          }
+      }
+      },
+      400: {
+      description: 'Ошибка валидации',
+      content: {
+          'application/json': {
+          schema: { $ref: 'Error#' }
+          }
+      }
+      },
+      401: {
+      description: 'Не авторизован',
+      content: {
+          'application/json': {
+          schema: { $ref: 'Error#' }
+          }
+      }
+    }
+  }
+}

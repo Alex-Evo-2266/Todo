@@ -12,6 +12,14 @@ export type MoveTodoRequest = {
   placement: "before" | "after" | "end" | "start" 
 }
 
+export type CheckTodoRequest = { 
+  id: string
+  posVersion: number
+  contVersion: number
+  check: boolean
+  todoList: string
+}
+
 export type EditTodoRequest = { 
   todoListId: string, 
   id: string; 
@@ -21,12 +29,18 @@ export type EditTodoRequest = {
   date?: string
 }
 
+export type AccessItem = {
+  id: string;
+  todoListId: string;
+  userId: string;
+};
+
 
 export const todoApi = createApi({
   reducerPath: 'todoApi',
   baseQuery: baseQueryWithReauth,
   // Теги для автоматической инвалидации кэша
-  tagTypes: ['TodoList', 'Todo', 'Comment', 'TodoListDetail'],
+  tagTypes: ['TodoList', 'Todo', 'Comment', 'TodoListDetail', 'Access'],
   endpoints: (builder) => ({
     // ----- TodoLists -----
     // GET /api-todo/todolists – получить все списки пользователя
@@ -166,6 +180,32 @@ export const todoApi = createApi({
       },
     }),
 
+    checkTodo: builder.mutation<void, CheckTodoRequest>({
+      query: ({ id, contVersion, posVersion, check }) => ({
+        url: `/api-todo/todo/${id}/check`,
+        method: 'PUT',
+        body:{
+          check, contVersion, posVersion
+        }
+      }),
+      invalidatesTags: (_, __, { todoList }) => [{ type: 'TodoListDetail', id: todoList }],
+      async onQueryStarted({ id, todoList, check }, { dispatch, queryFulfilled }) {
+        const patchResult = dispatch(
+          todoApi.util.updateQueryData('getTodoListWithTodos', todoList, (draft) => {
+            const sourceIndex = draft.todos.findIndex((c) => c.id === id);
+            if (sourceIndex === -1) return;
+            draft.todos[sourceIndex].completed = check
+          })
+        );
+
+        try {
+          await queryFulfilled;
+        } catch {
+          patchResult.undo();
+        }
+      },
+    }),
+
     editTodo: builder.mutation<void, EditTodoRequest>({
       query: ({ id, todoListId, ...body }) => ({
         url: `/api-todo/todo/${id}`,
@@ -173,7 +213,49 @@ export const todoApi = createApi({
         body:body
       }),
       invalidatesTags: (_, __, { todoListId, id }) => [{ type: 'TodoListDetail', id: todoListId }, { type: 'Todo', id }],
-    })
+    }),
+
+    getAccessList: builder.query<AccessItem[], string>({
+      query: (todoListId) => ({
+        url: `/api-todo/todolists/${todoListId}/access`,
+        method: "GET",
+      }),
+
+      providesTags: (_, __, todoListId) => [
+        { type: "Access", id: todoListId },
+      ],
+    }),
+
+    // ➕ Выдать доступ
+    grantAccess: builder.mutation<
+      AccessItem,
+      { todoListId: string; userId: string }
+    >({
+      query: ({ todoListId, userId }) => ({
+        url: `/api-todo/todolists/${todoListId}/access`,
+        method: "POST",
+        body: { userId },
+      }),
+
+      invalidatesTags: (_, __, { todoListId }) => [
+        { type: "Access", id: todoListId },
+      ],
+    }),
+
+    // ➖ Забрать доступ
+    revokeAccess: builder.mutation<
+      void,
+      { todoListId: string; userId: string }
+    >({
+      query: ({ todoListId, userId }) => ({
+        url: `/api-todo/todolists/${todoListId}/access/${userId}`,
+        method: "DELETE",
+      }),
+
+      invalidatesTags: (_, __, { todoListId }) => [
+        { type: "Access", id: todoListId },
+      ],
+    }),
   }),
 });
 
@@ -190,7 +272,11 @@ export const {
   useDeleteCommentMutation,
   useUpdateTodoListMutation,
   useMoveTodoMutation,
-  useEditTodoMutation
+  useEditTodoMutation,
+  useRevokeAccessMutation,
+  useGetAccessListQuery,
+  useGrantAccessMutation,
+  useCheckTodoMutation
 } = todoApi;
 
 

@@ -5,6 +5,10 @@
     gap: 8px;
 }
 
+.todolists-panel__list{
+    flex: 1;
+}
+
 @media (max-width: 1000px) {
     .todolists-panel{
         width: calc(100% - 32px);

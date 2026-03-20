@@ -10,7 +10,7 @@ export const authConfig = new Config(
     API_AUTH, 
     CLIENT_ID, 
     window.location.origin + `${ROOT_URL}/callback`, 
-    `${ROOT_URL}/todo`, 
+    `${ROOT_URL}/todos`, 
     BASE_KEY_STORAGE
 )
 

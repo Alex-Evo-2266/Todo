@@ -1,9 +1,19 @@
 import { authPrivilege } from "@root/hooks/authPrivilege.js";
 import { FastifyInstance } from "fastify";
 import { createTodoListSchema, createTodoSchema, deleteTodoList, editTodoListSchema, getTodoListSchema, getTodosTodoListSchemas, moveTodoSchema } from "./openApiSchemas/todolist.js";
-import { creactComment, deleteComment, deleteTodo, getTodoSchema, updateTodoSchema } from "./openApiSchemas/todo.js";
+import { creactComment, deleteComment, deleteTodo, getTodoSchema, updateCheckTodoSchema, updateTodoSchema } from "./openApiSchemas/todo.js";
 import { LexoRank } from "lexorank";
 
+type Query = {
+  completed?: "true" | "false"
+  search?: string
+  dateFrom?: string
+  dateTo?: string
+  createDateFrom?: string
+  createDateTo?: string
+  sortBy?: "createdAt" | "updatedAt" | "title" | "runk"
+  sortOrder?: "asc" | "desc"
+}
 
 export function route(app: FastifyInstance)
 {
@@ -160,7 +170,7 @@ export function route(app: FastifyInstance)
      * Get specific TodoList with all its todos
      * Only owner or users with access can view
      */
-    app.get<{ Params: { id: string } }>(
+    app.get<{ Params: { id: string }, Querystring: Query }>(
     "/todolists/:id",
     {
         preHandler: authPrivilege("todolist:read"),
@@ -170,6 +180,35 @@ export function route(app: FastifyInstance)
         try {
         const userId = req.user!.id;
         const { id } = req.params;
+        const { completed, search, dateTo, dateFrom, createDateFrom, createDateTo, sortBy = "runk", sortOrder = "asc" } = req.query
+
+        const todosWhere: any = {};
+
+        const completedParsed =
+          completed !== undefined ? completed === "true" : undefined;
+
+        if (completedParsed !== undefined) {
+          todosWhere.completed = completedParsed;
+        }
+
+        if (search) {
+          todosWhere.title = {
+            contains: search,
+            mode: "insensitive",
+          };
+        }
+
+        if (dateFrom || dateTo) {
+          todosWhere.date = {};
+          if (dateFrom) todosWhere.date.gte = new Date(dateFrom);
+          if (dateTo) todosWhere.date.lte = new Date(dateTo);
+        }
+
+        if (createDateFrom || createDateTo) {
+          todosWhere.createdAt = {};
+          if (createDateFrom) todosWhere.createdAt.gte = new Date(createDateFrom);
+          if (createDateTo) todosWhere.createdAt.lte = new Date(createDateTo);
+        }
 
         // Ищем список, к которому пользователь имеет доступ (владелец или есть запись в access)
         const todoList = await app.prisma.todoList.findFirst({
@@ -178,11 +217,12 @@ export function route(app: FastifyInstance)
             OR: [{ ownerId: userId }, { access: { some: { userId } } }],
             },
             include: {
-            todos: {
-              orderBy: {
-                runk: "asc"
-              }
-            }, 
+              todos: {
+                where: todosWhere,
+                orderBy: {
+                  [sortBy]: sortOrder
+                }
+              }, 
             },
         });
 
@@ -696,6 +736,109 @@ app.delete<{ Params: { id: string } }>(
             }
           })
               // 6. Возвращаем обновлённую колонку (можно вернуть полные данные)
+              return reply.code(200).send(retData);
+
+
+        }catch(error)
+        {
+          console.log(error)
+          return reply.status(400).send({ 
+            statusCode: 400, 
+            error: 'Bad Request', 
+            message: 'Failed to update check todo list' 
+          });
+        }
+      }
+    )
+
+
+       app.put<{ Body: { posVersion: number, contVersion:number, check: boolean}, Params: { id: string } }>(
+      "/todo/:id/check",
+      {
+        preHandler: authPrivilege("todolist:read"),
+        schema: updateCheckTodoSchema
+      },
+      async (req, reply) => {
+        try{
+          const userId = req.user!.id;
+          const id = req.params.id;
+          const {posVersion, check, contVersion} = req.body
+
+          // 2. Проверяем существование перемещаемой колонки и её принадлежность доске
+          const task = await app.prisma.todo.findFirst({
+            where: {id}
+          })
+          if (!task) {
+            return reply.code(404).send({ error: 'Todo not found in this board' });
+          }
+          if (task.posVersion !== posVersion || task.contVersion !== contVersion) {
+            return reply.code(409).send({
+              error: "Position conflict",
+              message: "The task has been moved by another user. Please refresh and try again.",
+              data: task
+            });
+          }
+
+          const lastNoCheckTask = await app.prisma.todo.findFirst({
+            where: {
+              completed: false,
+              NOT: {id},
+              todoListId: task.todoListId
+            },
+            orderBy: {runk: "desc"}
+          })
+
+          const firstCheckTask = await app.prisma.todo.findFirst({
+            where: {
+              completed: true,
+              NOT: {id},
+              todoListId: task.todoListId
+            },
+            orderBy: {runk: "asc"}
+          })
+
+          let newOrder: string;
+
+          if (!firstCheckTask) {
+            if (lastNoCheckTask) {
+              newOrder = LexoRank.parse(lastNoCheckTask.runk).genNext().toString();
+            } else {
+              newOrder = LexoRank.middle().toString();
+            }
+          }
+          else if (!lastNoCheckTask) {
+            if (firstCheckTask) {
+              newOrder = LexoRank.parse(firstCheckTask.runk).genPrev().toString();
+            } else {
+              newOrder = LexoRank.middle().toString();
+            }
+          }
+          else {
+            newOrder = LexoRank.parse(lastNoCheckTask.runk)
+                  .between(LexoRank.parse(firstCheckTask.runk))
+                  .toString();
+          }
+
+          const retData = await app.prisma.todo.update({
+            where: {id: id, todoList:{
+              OR:[
+                { ownerId: userId },
+                { access: { some: { userId } } }
+              ]
+            } },
+            data: {runk: newOrder, completed: check, posVersion: task.posVersion + 1, contVersion: task.contVersion + 1},
+            select: {
+              title: true,
+              runk: true,
+              id: true,
+              createdAt: true,
+              updatedAt: true,
+              posVersion: true,
+              contVersion: true,
+              completed: true,
+              status: true
+            }
+          })
               return reply.code(200).send(retData);
 
 

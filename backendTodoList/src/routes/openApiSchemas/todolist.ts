@@ -224,6 +224,51 @@ export const getTodosTodoListSchemas = {
         },
         },
     },
+    querystring: {
+        type: "object",
+        properties: {
+        completed: {
+            type: "string",
+            enum: ["true", "false"],
+        },
+        search: {
+            type: "string",
+            description: "Поиск по названию задачи",
+        },
+        dateFrom: {
+            type: "string",
+            format: "date-time",
+            description: "Дата выполнения ОТ",
+        },
+        dateTo: {
+            type: "string",
+            format: "date-time",
+            description: "Дата выполнения ДО",
+        },
+        createDateFrom: {
+            type: "string",
+            format: "date-time",
+            description: "Дата создания ОТ",
+        },
+        createDateTo: {
+            type: "string",
+            format: "date-time",
+            description: "Дата создания ДО",
+        },
+        sortBy: {
+            type: "string",
+            enum: ["createdAt", "updatedAt", "title", "runk"],
+            default: "runk",
+            description: "Поле сортировки",
+        },
+        sortOrder: {
+            type: "string",
+            enum: ["asc", "desc"],
+            default: "asc",
+            description: "Порядок сортировки",
+        },
+        },
+    },
     response: {
         200: {
         description: "Список задач и задачи успешно получены",

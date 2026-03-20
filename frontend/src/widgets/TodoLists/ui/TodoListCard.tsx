@@ -1,12 +1,12 @@
 import { BaseDialog, IconButton, ListItem, MoreVertical } from "alex-evo-sh-ui-kit"
 import type { TodoList } from "../../../entites/todos/models/todo"
 import { useNavigate } from "react-router-dom"
-import { useCallback, useState } from "react"
+import { useCallback, useMemo, useState } from "react"
 import { Menu } from "../../../shared/ui/Menu"
 import { useDeleteTodoListMutation } from "../../../entites/todos/slices/todos"
 import { useTranslation } from "react-i18next"
 import { EditTodoListDialog } from "../../../features/EditTodoListDialog"
-import { ROOT_URL } from "../../../app/config"
+import { ROOT_URL } from "../../../config"
 
 type TodoListCardProps = {
     item: TodoList
@@ -21,10 +21,22 @@ export const TodoListCard = ({item, active, onHide}:TodoListCardProps) => {
     const [isOpenDeleteDialog, setOpenDeleteDialog] = useState(false)
     const [openMenu, setOpenMenu] = useState<{x: number, y:number} | null>(null)
     const [request] = useDeleteTodoListMutation()
+    const blocks = useMemo(()=>[{
+        items: [{
+            title:  t("edit"),
+            onClick: ()=>setOpenEditDialog(true),
+        },{
+            title: t("access"),
+            onClick: ()=>navigate(`${ROOT_URL}/todos/access/${item.id}`)
+        },{
+            title: t("delete"),
+            onClick: ()=>setOpenDeleteDialog(true)
+        }]
+    }],[item.id])
 
     const toglePath = useCallback((e:React.MouseEvent<HTMLLIElement>, id:string) => {
         e.stopPropagation()
-        navigate(`${ROOT_URL}/todo/${id}`)
+        navigate(`${ROOT_URL}/todos/todo/${id}`)
         onHide?.()
     },[onHide, navigate])
 
@@ -32,19 +44,10 @@ export const TodoListCard = ({item, active, onHide}:TodoListCardProps) => {
         request(item.id)
     },[request, item.id])
 
-    const blocks = [{
-        items: [{
-            title:  t("edit"),
-            onClick: ()=>setOpenEditDialog(true),
-        },{
-            title: t("delete"),
-            onClick: ()=>setOpenDeleteDialog(true)
-        }]
-    }]
-
     return(
         <>
             <ListItem 
+                shadow={7}
                 active={active} 
                 key={item.id} 
                 header={item.title} 

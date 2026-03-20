@@ -7,6 +7,7 @@ import { useParams } from "react-router-dom"
 import { TodoListCard } from "./TodoListCard"
 import { useTranslation } from "react-i18next"
 import { CreateDialog } from "../../../features/CreactTodoListDialog"
+import { LogoutButton } from "../../../features/LogoutBtn"
 
 export const TodoListsMobile = () => {
 
@@ -30,6 +31,7 @@ export const TodoListsMobile = () => {
                 ))
             }
             </ListContainer>
+            <LogoutButton/>
         </BottomSheetsUi>
         <CreateDialog
                 open={visibleCreateDialog}

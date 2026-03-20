@@ -21,11 +21,13 @@ export const CommentTodoDialog = ({todo}:CommentsDialogProps) => {
     useError({error, isError})
 
     const sendComment = useCallback(async(data: {comment: string}) => {
-        const comment = data.comment
-        if(comment && typeof(comment) === 'string'){
-            await addComment({todoId: todo.id, text:comment})
-            ul.current?.scrollIntoView({behavior: "smooth"})
-        }
+        
+            const comment = data.comment
+            if(comment && typeof(comment) === 'string'){
+                await addComment({todoId: todo.id, text:comment})
+                ul.current?.scrollIntoView({behavior: "smooth"})
+            }
+        
     },[addComment, todo])
 
     const submite = () => {

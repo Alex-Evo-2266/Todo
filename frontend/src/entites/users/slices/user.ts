@@ -9,6 +9,10 @@ export type User = {
   role: string
 }
 
+export type UserAll = { 
+  users: User[]
+}
+
 // ---------- Базовый URL из спецификации ----------
 
 export const userApi = createApi({
@@ -22,11 +26,17 @@ export const userApi = createApi({
       providesTags: (_, __, id) =>
           [{ type: 'User', id: id }]
     }),
+    getAllUser: builder.query<UserAll, void>({
+      query: () => `/api-auth/users/all`,
+      providesTags: () =>
+          [{ type: 'User', id: "LIST" }]
+    }),
   }),
 });
 
 export const {
-    useGetUserQuery
+    useGetUserQuery,
+    useGetAllUserQuery
 } = userApi;
 
 

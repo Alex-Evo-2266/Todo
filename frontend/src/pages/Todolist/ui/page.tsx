@@ -25,7 +25,7 @@ export const TodoListPage = () => {
         return null
 
     return (
-        <div>
+        <div style={{display: "flex", flexDirection: "column", gap: "5px", height: "100%"}}>
             <TodoList onCreate={openCreateDialog} onEdit={openDetailDialog}/>
             <CreateTodoDialog listId={id} open={isOpenCreateTodoDialog} onHide={()=>setOpenCreateTodoDialog(false)}/>
               {

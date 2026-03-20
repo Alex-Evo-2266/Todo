@@ -7,7 +7,7 @@ export default defineConfig({
   plugins: [react()],
   server: {
     proxy: {
-      '/api-auth': 'http://127.0.0.1:1337',
+      '/api-auth': 'https://127.0.0.1:1338',
       '/media': 'http://127.0.0.1:1337',
       '/api-todo': 'http://127.0.0.1:1337',
     },

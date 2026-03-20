@@ -1,6 +1,6 @@
 import { useParams } from "react-router-dom"
 import { useGetTodoListWithTodosQuery, useMoveTodoMutation } from "../../../entites/todos/slices/todos"
-import { IconButton, ListContainer, Plus, Typography } from "alex-evo-sh-ui-kit"
+import { IconButton, ListContainer, Panel, Plus, Typography } from "alex-evo-sh-ui-kit"
 import { useTranslation } from "react-i18next"
 import "./TodoList.scss"
 import React, { useCallback } from "react"
@@ -41,24 +41,26 @@ const TodoListNoMemo = ({onCreate, onEdit}:TodoListProps) => {
 
     return (
         <>
-            <div className="title_div">
+            <Panel className="title_div" shadow={6}>
                 <Typography type="title">{t("title_todolist")}: {data?.title}</Typography>
-                <IconButton icon={<Plus/>} onClick={onCreate}/>
-            </div>
-            <DragDropContext onDragEnd={dragEndHandler}>
-                <Droppable droppableId="root" direction="vertical" type="TASK">
-                    {(provided) => (
-                        <ListContainer transparent ref={provided.innerRef} {...provided.droppableProps}>
-                            {
-                                data?.todos.map((item, index)=>(
-                                  <TodoItem onClick={()=>onEdit(item.id)} key={item.id} index={index} item={item}/>  
-                                ))  
-                            }
-                            {provided.placeholder}
-                        </ListContainer>
-                    )}
-                </Droppable>
-            </DragDropContext>
+                <IconButton shadow={5} icon={<Plus/>} onClick={onCreate}/>
+            </Panel>
+            <Panel style={{flex: 1}} shadow={6}>
+                <DragDropContext onDragEnd={dragEndHandler}>
+                    <Droppable droppableId="root" direction="vertical" type="TASK">
+                        {(provided) => (
+                            <ListContainer transparent ref={provided.innerRef} {...provided.droppableProps} style={{display: "flex", gap: "5px", flexDirection: "column"}}>
+                                {
+                                    data?.todos.map((item, index)=>(
+                                    <TodoItem onClick={()=>onEdit(item.id)} key={item.id} index={index} item={item}/>  
+                                    ))  
+                                }
+                                {provided.placeholder}
+                            </ListContainer>
+                        )}
+                    </Droppable>
+                </DragDropContext>
+            </Panel>
         </>
     )
 }

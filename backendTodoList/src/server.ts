@@ -3,6 +3,7 @@ import { PrismaClient } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import {addSchemas, registerSwagger} from "@src/openAPISchemas.js"
 import { route } from "./routes/router.js";
+import { routeAccess } from "./routes/users.js";
 
 async function start() {
 
@@ -21,6 +22,7 @@ async function start() {
     addSchemas(app)
 
     app.register(route, {prefix: '/api-todo'})
+    app.register(routeAccess, {prefix: '/api-todo'})
 
   try {
     await app.listen({ port: 3000, host: '0.0.0.0' });

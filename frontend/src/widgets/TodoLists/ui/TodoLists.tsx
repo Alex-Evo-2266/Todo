@@ -7,6 +7,7 @@ import { useParams } from "react-router-dom"
 import { TodoListCard } from "./TodoListCard"
 import { useTranslation } from "react-i18next"
 import { CreateDialog } from "../../../features/CreactTodoListDialog"
+import { LogoutButton } from "../../../features/LogoutBtn"
 
 export const TodoLists = () => {
 
@@ -16,19 +17,23 @@ export const TodoLists = () => {
     const {t} = useTranslation()
 
     return (
-        <Panel className="todolists-panel">
-            <FilledButton size="medium" style={{width: "100%"}} onClick={()=>setVisibleCreateDialog(true)}>{t("create")}</FilledButton>
-            <ListContainer className="todolists-panel__list" transparent>
-            {
-                data?.map((item)=>(
-                    <TodoListCard item={item} key={item.id} active={item.id === id}/>
-                ))
-            }
-            </ListContainer>
+        <>
+            <Panel className="todolists-panel" shadow={6}>
+                <FilledButton size="medium" style={{width: "100%"}} onClick={()=>setVisibleCreateDialog(true)}>{t("create")}</FilledButton>
+                <ListContainer flex gap={5} className="todolists-panel__list" transparent>
+                {
+                    data?.map((item)=>(
+                        <TodoListCard item={item} key={item.id} active={item.id === id}/>
+                    ))
+                }
+                </ListContainer>
+                <LogoutButton/>
+            </Panel>
             <CreateDialog
                 open={visibleCreateDialog}
                 hide={()=>setVisibleCreateDialog(false)}
             />
-        </Panel>
+        </>
+        
     )
 }
