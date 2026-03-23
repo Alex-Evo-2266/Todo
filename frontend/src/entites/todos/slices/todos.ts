@@ -35,6 +35,18 @@ export type AccessItem = {
   userId: string;
 };
 
+export type GetTodosArgs = {
+  id: string
+  cursor?: string | null
+  limit?: number
+
+  // твои фильтры
+  completed?: boolean
+  search?: string
+  dateFrom?: string
+  dateTo?: string
+}
+
 
 export const todoApi = createApi({
   reducerPath: 'todoApi',
@@ -76,10 +88,51 @@ export const todoApi = createApi({
     }),
 
     // GET /api-todo/todolists/{id} – получить список с задачами
-    getTodoListWithTodos: builder.query<TodoListWithTodos, string>({
-      query: (id) => `/api-todo/todolists/${id}`,
-      providesTags: (_, __, id) => 
-      [{ type: 'TodoListDetail', id }],
+    getTodoListWithTodos: builder.query<
+      TodoListWithTodos,
+      GetTodosArgs
+    >({
+      query: ({ id, cursor, ...params }) => ({
+        url: `/api-todo/todolists/${id}`,
+        params: {
+          ...params,
+          ...(cursor ? {cursor}: {})
+        },
+      }),
+
+      // 🔥 убираем cursor из ключа кеша
+      serializeQueryArgs: ({ endpointName, queryArgs }) => {
+        return `${endpointName}-${queryArgs.id}-${JSON.stringify({
+          ...queryArgs,
+          cursor: undefined
+        })}`
+      },
+
+      // 🔥 объединяем страницы
+      merge: (currentCache, newData) => {
+        if (!currentCache.todos) {
+          currentCache.todos = []
+        }
+
+        const existingIds = new Set(currentCache.todos.map(t => t.id))
+
+        newData.todos.forEach(todo => {
+          if (!existingIds.has(todo.id)) {
+            currentCache.todos.push(todo)
+          }
+        })
+
+        currentCache.meta = newData.meta
+      },
+
+      // 🔥 когда делать новый запрос
+      forceRefetch({ currentArg, previousArg }) {
+        return currentArg?.cursor !== previousArg?.cursor
+      },
+
+      providesTags: (_, __, arg) => [
+        { type: 'TodoListDetail', id: arg.id },
+      ],
     }),
 
     // DELETE /api-todo/todolists/{id} – удалить список
@@ -149,33 +202,117 @@ export const todoApi = createApi({
       query: ({ id, placement, posVersion, parentId, targetTask }) => ({
         url: `/api-todo/todo/${id}/move`,
         method: 'PUT',
-        body:{
-          parentId, placement, targetTask, posVersion
-        }
+        body: {
+          parentId,
+          placement,
+          targetTask,
+          posVersion,
+        },
       }),
-      invalidatesTags: (_, __, { todoList }) => [{ type: 'TodoListDetail', id: todoList }],
-      async onQueryStarted({ id, placement, targetTask, todoList }, { dispatch, queryFulfilled }) {
-        const patchResult = dispatch(
-          todoApi.util.updateQueryData('getTodoListWithTodos', todoList, (draft) => {
-            const sourceIndex = draft.todos.findIndex((c) => c.id === id);
-            if (sourceIndex === -1) return;
 
-            const [moved] = draft.todos.splice(sourceIndex, 1);
+      invalidatesTags: [],
 
-            let targetIndex = draft.todos.findIndex((c) => c.id === targetTask);
+      async onQueryStarted(
+        { id, placement, targetTask, todoList },
+        { dispatch, queryFulfilled, getState }
+      ) {
+        const patchResults: any[] = []
 
-            if (placement === 'after') targetIndex++;
-            if (placement === 'start') targetIndex = 0;
-            if (placement === 'end') targetIndex = draft.todos.length;
+        const state = getState()
 
-            draft.todos.splice(targetIndex, 0, moved);
-          })
-        );
+        const queries = todoApi.util.selectInvalidatedBy(state, [
+          { type: 'TodoListDetail', id: todoList },
+        ])
+
+        // 🔥 optimistic reorder
+        queries.forEach(({ originalArgs }) => {
+          const patchResult = dispatch(
+            todoApi.util.updateQueryData(
+              'getTodoListWithTodos',
+              originalArgs,
+              (draft) => {
+                const todos = draft.todos
+
+                const sourceIndex = todos.findIndex((t) => t.id === id)
+                if (sourceIndex === -1) return
+
+                const [moved] = todos.splice(sourceIndex, 1)
+
+                let targetIndex = todos.findIndex((t) => t.id === targetTask)
+
+                if (targetIndex === -1) {
+                  targetIndex =
+                    placement === 'end' ? todos.length : 0
+                }
+
+                if (targetIndex > sourceIndex) {
+                  targetIndex--
+                }
+
+                if (placement === 'after') targetIndex++
+                if (placement === 'start') targetIndex = 0
+                if (placement === 'end') targetIndex = todos.length
+
+                // 👉 optimistic флаг
+                moved._optimistic = true
+
+                todos.splice(targetIndex, 0, moved)
+              }
+            )
+          )
+
+          patchResults.push({ patchResult, originalArgs })
+        })
 
         try {
-          await queryFulfilled;
-        } catch {
-          patchResult.undo();
+          const { data } = await queryFulfilled
+
+          // 🔥 success → синхронизация с сервером
+          patchResults.forEach(({ originalArgs }) => {
+            dispatch(
+              todoApi.util.updateQueryData(
+                'getTodoListWithTodos',
+                originalArgs,
+                (draft) => {
+                  const todo = draft.todos.find((t) => t.id === id)
+                  if (!todo) return
+
+                  // 👉 обновляем реальные данные
+                  Object.assign(todo, data)
+
+                  delete todo._optimistic
+                }
+              )
+            )
+          })
+        } catch (err: any) {
+          // 🔥 rollback optimistic
+          patchResults.forEach(({ patchResult }) => patchResult.undo())
+
+          // 🔥 если конфликт позиций
+          if (err?.error?.status === 409 && err?.error?.data) {
+            const serverTodos = err.error.data
+
+            // 👉 сервер может вернуть массив
+            queries.forEach(({ originalArgs }) => {
+              dispatch(
+                todoApi.util.updateQueryData(
+                  'getTodoListWithTodos',
+                  originalArgs,
+                  (draft) => {
+                    if (Array.isArray(serverTodos)) {
+                      // 🔥 заменяем порядок
+                      draft.todos = serverTodos
+                    } else {
+                      // 🔥 или один элемент
+                      const todo = draft.todos.find((t) => t.id === id)
+                      if (todo) Object.assign(todo, serverTodos)
+                    }
+                  }
+                )
+              )
+            })
+          }
         }
       },
     }),
@@ -184,24 +321,88 @@ export const todoApi = createApi({
       query: ({ id, contVersion, posVersion, check }) => ({
         url: `/api-todo/todo/${id}/check`,
         method: 'PUT',
-        body:{
-          check, contVersion, posVersion
-        }
+        body: {
+          check,
+          contVersion,
+          posVersion,
+        },
       }),
-      invalidatesTags: (_, __, { todoList }) => [{ type: 'TodoListDetail', id: todoList }],
-      async onQueryStarted({ id, todoList, check }, { dispatch, queryFulfilled }) {
-        const patchResult = dispatch(
-          todoApi.util.updateQueryData('getTodoListWithTodos', todoList, (draft) => {
-            const sourceIndex = draft.todos.findIndex((c) => c.id === id);
-            if (sourceIndex === -1) return;
-            draft.todos[sourceIndex].completed = check
-          })
-        );
+
+      invalidatesTags: [],
+
+      async onQueryStarted(
+        { id, todoList, check },
+        { dispatch, queryFulfilled, getState }
+      ) {
+        const patchResults: any[] = []
+
+        const state = getState()
+
+        const queries = todoApi.util.selectInvalidatedBy(state, [
+          { type: 'TodoListDetail', id: todoList },
+        ])
+
+        // 🔥 optimistic update
+        queries.forEach(({ originalArgs }) => {
+          const patchResult = dispatch(
+            todoApi.util.updateQueryData(
+              'getTodoListWithTodos',
+              originalArgs,
+              (draft) => {
+                const todo = draft.todos.find((t) => t.id === id)
+                if (!todo) return
+
+                todo.completed = check
+              }
+            )
+          )
+
+          patchResults.push({ patchResult, originalArgs })
+        })
 
         try {
-          await queryFulfilled;
-        } catch {
-          patchResult.undo();
+          const { data } = await queryFulfilled
+
+          // 🔥 success → обновляем реальными данными
+          patchResults.forEach(({ originalArgs }) => {
+            dispatch(
+              todoApi.util.updateQueryData(
+                'getTodoListWithTodos',
+                originalArgs,
+                (draft) => {
+                  const todo = draft.todos.find((t) => t.id === id)
+                  if (!todo) return
+
+                  // 👉 заменяем тем что пришло с сервера
+                  Object.assign(todo, data)
+
+                }
+              )
+            )
+          })
+        } catch (err: any) {
+          // 🔥 откатываем optimistic
+          patchResults.forEach(({ patchResult }) => patchResult.undo())
+
+          // 🔥 если 409 → применяем реальные данные
+          if (err?.error?.status === 409 && err?.error?.data) {
+            const serverTodo = err.error.data
+
+            queries.forEach(({ originalArgs }) => {
+              dispatch(
+                todoApi.util.updateQueryData(
+                  'getTodoListWithTodos',
+                  originalArgs,
+                  (draft) => {
+                    const todo = draft.todos.find((t) => t.id === id)
+                    if (!todo) return
+
+                    Object.assign(todo, serverTodo)
+                  }
+                )
+              )
+            })
+          }
         }
       },
     }),

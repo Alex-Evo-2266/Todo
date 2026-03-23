@@ -50,6 +50,7 @@ model Todo {
   comments    Comment[]
 
   @@index([todoListId, parentId, runk])
+  @@unique([runk, id])
 }
 
 model Comment {

@@ -227,46 +227,59 @@ export const getTodosTodoListSchemas = {
     querystring: {
         type: "object",
         properties: {
-        completed: {
-            type: "string",
-            enum: ["true", "false"],
-        },
-        search: {
-            type: "string",
-            description: "Поиск по названию задачи",
-        },
-        dateFrom: {
-            type: "string",
-            format: "date-time",
-            description: "Дата выполнения ОТ",
-        },
-        dateTo: {
-            type: "string",
-            format: "date-time",
-            description: "Дата выполнения ДО",
-        },
-        createDateFrom: {
-            type: "string",
-            format: "date-time",
-            description: "Дата создания ОТ",
-        },
-        createDateTo: {
-            type: "string",
-            format: "date-time",
-            description: "Дата создания ДО",
-        },
-        sortBy: {
-            type: "string",
-            enum: ["createdAt", "updatedAt", "title", "runk"],
-            default: "runk",
-            description: "Поле сортировки",
-        },
-        sortOrder: {
-            type: "string",
-            enum: ["asc", "desc"],
-            default: "asc",
-            description: "Порядок сортировки",
-        },
+            completed: {
+                type: "string",
+                enum: ["true", "false"],
+            },
+            search: {
+                type: "string",
+                description: "Поиск по названию задачи",
+            },
+            dateFrom: {
+                type: "string",
+                format: "date-time",
+                description: "Дата выполнения ОТ",
+            },
+            dateTo: {
+                type: "string",
+                format: "date-time",
+                description: "Дата выполнения ДО",
+            },
+            createDateFrom: {
+                type: "string",
+                format: "date-time",
+                description: "Дата создания ОТ",
+            },
+            createDateTo: {
+                type: "string",
+                format: "date-time",
+                description: "Дата создания ДО",
+            },
+            sortBy: {
+                type: "string",
+                enum: ["createdAt", "updatedAt", "title", "runk"],
+                default: "runk",
+                description: "Поле сортировки",
+            },
+            sortOrder: {
+                type: "string",
+                enum: ["asc", "desc"],
+                default: "asc",
+                description: "Порядок сортировки",
+            },
+            limit: {
+                type: 'integer',
+                description: 'количество',
+                examples: [20]
+            },
+            cursor: {
+                anyOf: [
+                    { type: "string" },
+                    { type: "null" }
+                ],
+                description: "cursor",
+                examples: ["123e4567-e89b-12d3-a456-426614174000", null],
+            }
         },
     },
     response: {
@@ -279,9 +292,24 @@ export const getTodosTodoListSchemas = {
             ownerId: { type: "string", format: "uuid" },
             createdAt: { type: "string", format: "date-time" },
             updatedAt: { type: "string", format: "date-time" },
+            meta: { type: "object",
+                properties: {
+                    nextCursor:{
+                        type: "string",
+                        format: "uuid",
+                        description: "Новый курсор",
+                        examples: ["123e4567-e89b-12d3-a456-426614174000"],
+                    },
+                    limit:{
+                        type: 'integer',
+                        description: 'количество',
+                        examples: [20]
+                    }
+                }
+            },
             todos: {
-            type: "array",
-            items: { $ref: "Todo#" },
+                type: "array",
+                items: { $ref: "Todo#" },
             },
         },
         },

@@ -1,11 +1,6 @@
 
 // ---------- Типы на основе схем OpenAPI ----------
-export interface TodoList {
-  id: string;
-  title: string;
-  ownerId: string;
-  createdAt: string;
-}
+
 
 export interface Todo {
   id: string;
@@ -21,6 +16,7 @@ export interface Todo {
   status: string
   parentId: string
   date: string
+  _optimistic?: boolean
 }
 
 export interface Comment {
@@ -32,8 +28,19 @@ export interface Comment {
   updatedAt: string;
 }
 
+export interface TodoList {
+  id: string;
+  title: string;
+  ownerId: string;
+  createdAt: string;
+}
+
 export interface TodoListWithTodos extends TodoList {
   todos: Todo[];
+  meta: {
+    nextCursor: string | null;
+    limit: number;
+  };
 }
 
 export interface TodoWithComments extends Todo {

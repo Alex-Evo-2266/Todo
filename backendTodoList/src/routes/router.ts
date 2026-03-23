@@ -3,6 +3,7 @@ import { FastifyInstance } from "fastify";
 import { createTodoListSchema, createTodoSchema, deleteTodoList, editTodoListSchema, getTodoListSchema, getTodosTodoListSchemas, moveTodoSchema } from "./openApiSchemas/todolist.js";
 import { creactComment, deleteComment, deleteTodo, getTodoSchema, updateCheckTodoSchema, updateTodoSchema } from "./openApiSchemas/todo.js";
 import { LexoRank } from "lexorank";
+import { Prisma } from "@prisma/client";
 
 type Query = {
   completed?: "true" | "false"
@@ -13,6 +14,8 @@ type Query = {
   createDateTo?: string
   sortBy?: "createdAt" | "updatedAt" | "title" | "runk"
   sortOrder?: "asc" | "desc"
+  limit?: number
+  cursor?: string
 }
 
 export function route(app: FastifyInstance)
@@ -171,79 +174,126 @@ export function route(app: FastifyInstance)
      * Only owner or users with access can view
      */
     app.get<{ Params: { id: string }, Querystring: Query }>(
-    "/todolists/:id",
-    {
+      "/todolists/:id",
+      {
         preHandler: authPrivilege("todolist:read"),
         schema: getTodosTodoListSchemas,
-    },
-    async (req, reply) => {
+      },
+      async (req, reply) => {
         try {
-        const userId = req.user!.id;
-        const { id } = req.params;
-        const { completed, search, dateTo, dateFrom, createDateFrom, createDateTo, sortBy = "runk", sortOrder = "asc" } = req.query
+          const userId = req.user!.id;
+          const { id } = req.params;
 
-        const todosWhere: any = {};
+          const {
+            completed,
+            search,
+            dateTo,
+            dateFrom,
+            createDateFrom,
+            createDateTo,
+            // sortBy = "runk",
+            sortOrder = "asc",
 
-        const completedParsed =
-          completed !== undefined ? completed === "true" : undefined;
+            // 🔥 новое
+            cursor,
+            limit = 20,
+          } = req.query;
 
-        if (completedParsed !== undefined) {
-          todosWhere.completed = completedParsed;
-        }
+          const todosWhere: any = {};
 
-        if (search) {
-          todosWhere.title = {
-            contains: search,
-            mode: "insensitive",
-          };
-        }
+          const completedParsed =
+            completed !== undefined ? completed === "true" : undefined;
 
-        if (dateFrom || dateTo) {
-          todosWhere.date = {};
-          if (dateFrom) todosWhere.date.gte = new Date(dateFrom);
-          if (dateTo) todosWhere.date.lte = new Date(dateTo);
-        }
+          if (completedParsed !== undefined) {
+            todosWhere.completed = completedParsed;
+          }
 
-        if (createDateFrom || createDateTo) {
-          todosWhere.createdAt = {};
-          if (createDateFrom) todosWhere.createdAt.gte = new Date(createDateFrom);
-          if (createDateTo) todosWhere.createdAt.lte = new Date(createDateTo);
-        }
+          if (search) {
+            todosWhere.title = {
+              contains: search,
+              mode: "insensitive",
+            };
+          }
 
-        // Ищем список, к которому пользователь имеет доступ (владелец или есть запись в access)
-        const todoList = await app.prisma.todoList.findFirst({
+          if (dateFrom || dateTo) {
+            todosWhere.date = {};
+            if (dateFrom) todosWhere.date.gte = new Date(dateFrom);
+            if (dateTo) todosWhere.date.lte = new Date(dateTo);
+          }
+
+          if (createDateFrom || createDateTo) {
+            todosWhere.createdAt = {};
+            if (createDateFrom)
+              todosWhere.createdAt.gte = new Date(createDateFrom);
+            if (createDateTo)
+              todosWhere.createdAt.lte = new Date(createDateTo);
+          }
+
+          // 🔥 cursor логика
+          let cursorQuery: undefined | {runk: any, id: any} = undefined;
+          if (cursor && cursor !== "null") {
+            const parsed = JSON.parse(cursor); // { runk: number, id: string }
+            cursorQuery = { runk: parsed.runk, id: parsed.id }; // runk_id = составной уникальный ключ
+          }
+
+          const todos = await app.prisma.todo.findMany({
             where: {
-            id,
-            OR: [{ ownerId: userId }, { access: { some: { userId } } }],
+              ...todosWhere,
+              todoListId: id,
             },
-            include: {
-              todos: {
-                where: todosWhere,
-                orderBy: {
-                  [sortBy]: sortOrder
-                }
-              }, 
-            },
-        });
+            orderBy: [
+              {runk: sortOrder},
+              {id: sortOrder}
+            ],
+            take: Number(limit) + 1, // 🔥 берем +1 чтобы понять есть ли ещё
+            cursor: cursorQuery,
+            skip: cursorQuery ? 1 : 0, // 🔥 пропускаем сам cursor
+          });
 
-        if (!todoList) {
+          // 🔥 определяем есть ли следующая страница
+          let nextCursor = null;
+
+          if (todos.length > limit) {
+            const nextItem = todos.pop();
+            if(nextItem)
+              nextCursor = JSON.stringify({
+                runk: nextItem.runk,
+                id: nextItem.id,
+              });
+          }
+
+          const todoList = await app.prisma.todoList.findFirst({
+            where: {
+              id,
+              OR: [{ ownerId: userId }, { access: { some: { userId } } }],
+            },
+          });
+
+          if (!todoList) {
             return reply.status(404).send({
-            statusCode: 404,
-            error: "Not Found",
-            message: "Todo list not found or access denied",
+              statusCode: 404,
+              error: "Not Found",
+              message: "Todo list not found or access denied",
             });
-        }
+          }
 
-        return reply.status(200).send(todoList);
+          return reply.status(200).send({
+            ...todoList,
+            todos,
+            meta: {
+              nextCursor,
+              limit,
+            },
+          });
         } catch (error) {
-        app.log.error(error);
-        return reply.status(400).send({
+          app.log.error(error);
+          return reply.status(400).send({
             statusCode: 400,
             error: "Bad Request",
             message: "Failed to fetch todo list",
-        });
+          });
         }
-    },
+      }
     );
 
     app.get<{Params: {id: string}}>(
@@ -762,7 +812,7 @@ app.delete<{ Params: { id: string } }>(
         try{
           const userId = req.user!.id;
           const id = req.params.id;
-          const {posVersion, check, contVersion} = req.body
+          const { check, contVersion} = req.body
 
           // 2. Проверяем существование перемещаемой колонки и её принадлежность доске
           const task = await app.prisma.todo.findFirst({
@@ -771,7 +821,7 @@ app.delete<{ Params: { id: string } }>(
           if (!task) {
             return reply.code(404).send({ error: 'Todo not found in this board' });
           }
-          if (task.posVersion !== posVersion || task.contVersion !== contVersion) {
+          if (task.contVersion !== contVersion) {
             return reply.code(409).send({
               error: "Position conflict",
               message: "The task has been moved by another user. Please refresh and try again.",
@@ -779,45 +829,67 @@ app.delete<{ Params: { id: string } }>(
             });
           }
 
-          const lastNoCheckTask = await app.prisma.todo.findFirst({
-            where: {
-              completed: false,
-              NOT: {id},
-              todoListId: task.todoListId
-            },
-            orderBy: {runk: "desc"}
-          })
+          // const lastNoCheckTask = await app.prisma.todo.findFirst({
+          //   where: {
+          //     completed: false,
+          //     NOT: {id},
+          //     todoListId: task.todoListId
+          //   },
+          //   orderBy: {runk: "desc"}
+          // })
 
-          const firstCheckTask = await app.prisma.todo.findFirst({
-            where: {
-              completed: true,
-              NOT: {id},
-              todoListId: task.todoListId
-            },
-            orderBy: {runk: "asc"}
-          })
+          // const firstCheckTask = await app.prisma.todo.findFirst({
+          //   where: {
+          //     completed: true,
+          //     NOT: {id},
+          //     todoListId: task.todoListId
+          //   },
+          //   orderBy: {runk: "asc"}
+          // })
 
-          let newOrder: string;
+          // let newOrder: string;
 
-          if (!firstCheckTask) {
-            if (lastNoCheckTask) {
-              newOrder = LexoRank.parse(lastNoCheckTask.runk).genNext().toString();
-            } else {
-              newOrder = LexoRank.middle().toString();
-            }
-          }
-          else if (!lastNoCheckTask) {
-            if (firstCheckTask) {
-              newOrder = LexoRank.parse(firstCheckTask.runk).genPrev().toString();
-            } else {
-              newOrder = LexoRank.middle().toString();
-            }
-          }
-          else {
-            newOrder = LexoRank.parse(lastNoCheckTask.runk)
-                  .between(LexoRank.parse(firstCheckTask.runk))
-                  .toString();
-          }
+          // if (!firstCheckTask) {
+          //   if (lastNoCheckTask) {
+          //     newOrder = LexoRank.parse(lastNoCheckTask.runk).genNext().toString();
+          //   } else {
+          //     newOrder = LexoRank.middle().toString();
+          //   }
+          // }
+          // else if (!lastNoCheckTask) {
+          //   if (firstCheckTask) {
+          //     newOrder = LexoRank.parse(firstCheckTask.runk).genPrev().toString();
+          //   } else {
+          //     newOrder = LexoRank.middle().toString();
+          //   }
+          // }
+          // else {
+          //   newOrder = LexoRank.parse(lastNoCheckTask.runk)
+          //         .between(LexoRank.parse(firstCheckTask.runk))
+          //         .toString();
+          // }
+
+          // const retData = await app.prisma.todo.update({
+          //   where: {id: id, todoList:{
+          //     OR:[
+          //       { ownerId: userId },
+          //       { access: { some: { userId } } }
+          //     ]
+          //   } },
+          //   data: {runk: newOrder, completed: check, posVersion: task.posVersion + 1, contVersion: task.contVersion + 1},
+          //   select: {
+          //     title: true,
+          //     runk: true,
+          //     id: true,
+          //     createdAt: true,
+          //     updatedAt: true,
+          //     posVersion: true,
+          //     contVersion: true,
+          //     completed: true,
+          //     status: true
+          //   }
+          // })
+          //     return reply.code(200).send(retData);
 
           const retData = await app.prisma.todo.update({
             where: {id: id, todoList:{
@@ -826,7 +898,7 @@ app.delete<{ Params: { id: string } }>(
                 { access: { some: { userId } } }
               ]
             } },
-            data: {runk: newOrder, completed: check, posVersion: task.posVersion + 1, contVersion: task.contVersion + 1},
+            data: {completed: check, posVersion: task.posVersion + 1, contVersion: task.contVersion + 1},
             select: {
               title: true,
               runk: true,

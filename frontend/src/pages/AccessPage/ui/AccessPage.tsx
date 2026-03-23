@@ -10,7 +10,7 @@ type UserTable = User & {type: "owner" | "access" | "other"}
 export const AccessPage = () => {
 
     const {id} = useParams()
-    const {data} = useGetTodoListWithTodosQuery(id ?? "")
+    const {data} = useGetTodoListWithTodosQuery({id: id ?? ""})
     const {data:usersData } = useGetAllUserQuery()
     const {t} = useTranslation()
     const {data:usersAccessData } = useGetAccessListQuery(id ?? "")

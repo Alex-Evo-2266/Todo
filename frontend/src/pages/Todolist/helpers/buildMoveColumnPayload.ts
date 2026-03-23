@@ -15,23 +15,23 @@ export function buildMoveColumnPayload(
   if (!dragTodo || !sourseId || destIndex === undefined || event.source.index === destIndex)
     return;
 
-  if (destIndex === 0) {
-    return {
-      todoList: list,
-      id: sourseId,
-      posVersion: dragTodo.posVersion,
-      placement: 'start'
-    };
-  }
+  // if (destIndex === 0) {
+  //   return {
+  //     todoList: list,
+  //     id: sourseId,
+  //     posVersion: dragTodo.posVersion,
+  //     placement: 'start'
+  //   };
+  // }
 
-  if (destIndex === todos.length - 1) {
-    return {
-        todoList: list,
-        id: sourseId,
-        posVersion: dragTodo.posVersion,
-        placement: 'end',
-    };
-  }
+  // if (destIndex === todos.length - 1) {
+  //   return {
+  //       todoList: list,
+  //       id: sourseId,
+  //       posVersion: dragTodo.posVersion,
+  //       placement: 'end',
+  //   };
+  // }
   const target = todos[destIndex];
 
   if (destIndex > event.source.index) {
