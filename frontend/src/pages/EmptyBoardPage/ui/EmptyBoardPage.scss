@@ -1,0 +1,66 @@
+/* EmptyBoardPlaceholder.scss */
+
+.empty-board-placeholder {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  background-color: #f9fafb; /* мягкий серый фон */
+  height: 100%;
+}
+
+.empty-board-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: 2rem;
+  max-width: 400px;
+  width: 100%;
+  background-color: #ffffff;
+  border-radius: 1rem;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+  text-align: center;
+}
+
+.empty-board-icon {
+  color: #9ca3af; /* серый для иконки */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.empty-board-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #111827;
+}
+
+.empty-board-text {
+  font-size: 0.95rem;
+  color: #6b7280;
+}
+
+.empty-board-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1.25rem;
+  background-color: #3b82f6;
+  color: #ffffff;
+  font-weight: 500;
+  border: none;
+  border-radius: 0.75rem;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+
+  &:hover {
+    background-color: #2563eb;
+  }
+
+  svg {
+    display: inline-block;
+  }
+}

@@ -1,0 +1,1 @@
+export {EmptyBoardPlaceholder} from './ui/EmptyBoardPage'

@@ -4,6 +4,7 @@ import { TodoListRoot } from "../pages/TodoListsRoot";
 import { TodoListPage } from "../pages/Todolist";
 import { ROOT_URL } from "../config";
 import { AccessPage } from "../pages/AccessPage";
+import { EmptyBoardPlaceholder } from "../pages/EmptyBoardPage";
 
 export const RoutesComponent = ()=>{
 
@@ -19,6 +20,7 @@ export const RoutesComponent = ()=>{
 						<Route path="todos" element={<TodoListRoot/>}>
 							<Route path="access/:id" element={<AccessPage/>}/>
 							<Route path="todo/:id" element={<TodoListPage/>}/>
+							<Route path="" element={<EmptyBoardPlaceholder/>} />
 							<Route path="*" element={<Navigate replace to="/todos" />} />
 						</Route>
 					</Route>

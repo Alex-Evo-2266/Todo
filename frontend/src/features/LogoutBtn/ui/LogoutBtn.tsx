@@ -19,7 +19,7 @@ export const LogoutButton = () => {
         <div
             style={{
                 width: "calc(100% - 20px)",
-                marginInline: "10px",
+                // marginInline: "10px",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "space-between",

@@ -23,6 +23,9 @@
 
 .boards-btn{
     position: relative;
+    flex: 0 0 60px;
+    margin-inline: 5px;
+    box-shadow: var(--shadow-elevation-20);
     &__icon{
         position: absolute;
         left: 20px;

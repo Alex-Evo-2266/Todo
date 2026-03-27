@@ -16,7 +16,7 @@ export const TodoListRoot = () => {
                 <TodoListsMobile/>:
                 <TodoLists/>
             }
-            <div style={{ flex: 1 }}>
+            <div className="todo-list-page" style={{ flex: 1 }}>
                 <Outlet/>
             </div>
         </div>

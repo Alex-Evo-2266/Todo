@@ -1,14 +1,13 @@
 import { useParams } from "react-router-dom"
 import { useGetTodoListWithTodosQuery, useMoveTodoMutation } from "../../../entites/todos/slices/todos"
-import { IconButton, ListContainer, Panel, Plus, Search, Typography } from "alex-evo-sh-ui-kit"
-import { useTranslation } from "react-i18next"
+import { ListContainer, Panel } from "alex-evo-sh-ui-kit"
 import "./TodoList.scss"
 import React, { useCallback, useEffect, useState } from "react"
 import { DragDropContext, Droppable, type DropResult } from "@hello-pangea/dnd"
 import { useError } from "../../../shared/hooks/errorMessage.hook"
 import { TodoItem } from "../../../widgets/TodoItem"
 import { buildMoveColumnPayload } from "../helpers/buildMoveColumnPayload"
-import { SelectField } from "../../../shared/ui/SelectField"
+import { TodoSearch } from "./searchTodo"
 
 type TodoListProps = {
     onCreate: () => void
@@ -18,21 +17,24 @@ type TodoListProps = {
 const TodoListNoMemo = ({onCreate, onEdit}:TodoListProps) => {
 
     const {id} = useParams()
-    const [search, setSearch] = useState<string>("")
-    const [completed, setCompleted] = useState<undefined | "false" | "true">(undefined)
     const [cursor, setCursor] = useState<string | null>(null)
+    const [search, setSearch] = useState<{search?: string, complited?: boolean}>({})
 
     const { data, isLoading, isFetching } = useGetTodoListWithTodosQuery({
         id: id ?? "",
         cursor,
         limit: 20,
-        search: search === ""? undefined: search,
-        completed: completed ? Boolean(completed): undefined
+        search: search.search === ""? undefined: search.search,
+        completed: search.complited === undefined ? undefined : search.complited
     })
-    const {t} = useTranslation()
 
     const [request, {error, isError}] = useMoveTodoMutation()
     useError({error, isError})
+
+    const setNewFilter = (data:{search?: string, complited?: boolean}) => {
+        setCursor(null)
+        setSearch(data)
+    }
 
     const dragEndHandler = useCallback((event: DropResult) => {
         if (!id || !data) return
@@ -66,45 +68,8 @@ const TodoListNoMemo = ({onCreate, onEdit}:TodoListProps) => {
 
     return (
         <>
-            <Panel className="title_div" shadow={6}>
-                <div className="toolbar">
-    
-                    <Typography type="title">
-                    {t("title_todolist")}: {data?.title}
-                    </Typography>
-
-                    <Search onSearch={setSearch} border/>
-
-                    <SelectField border value={completed ? completed: "undefined"} items={[{
-                        title: "",
-                        value: "undefined"
-                    },{
-                        title: "complited",
-                        value: "true"
-                    },{
-                        title: "uncomplited",
-                        value: "false"
-                    }]} onChange={(data: any)=>setCompleted(()=>{
-                        if(data === "undefined")
-                            return undefined
-                        return data
-                    })}/>
-
-                    {/* <select
-                    className="filter"
-                    value={filter}
-                    onChange={(e) => setFilter(e.target.value)}
-                    >
-                    <option value="all">{t("all")}</option>
-                    <option value="active">{t("active")}</option>
-                    <option value="completed">{t("completed")}</option>
-                    </select> */}
-
-                    <IconButton shadow={5} icon={<Plus />} onClick={onCreate} />
-
-                </div>
-            </Panel>
-            <Panel style={{flex: 1, height: "calc(100vh - 145px)"}} shadow={6}>
+            <TodoSearch title={data?.title ?? ""} onCreate={onCreate} onSearch={setNewFilter}/>
+            <Panel className="todo-list-content-panel" shadow={6}>
                 <DragDropContext onDragEnd={dragEndHandler}>
                     <Droppable droppableId="root" direction="vertical" type="TASK">
                         {(provided) => (

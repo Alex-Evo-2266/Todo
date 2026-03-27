@@ -13,7 +13,7 @@
     "@hello-pangea/dnd": "^18.0.1",
     "@reduxjs/toolkit": "^2.11.2",
     "alex-evo-sh-auth": "^0.0.16",
-    "alex-evo-sh-ui-kit": "^1.1.93",
+    "alex-evo-sh-ui-kit": "^1.1.94",
     "dayjs": "^1.11.20",
     "i18next": "^25.8.17",
     "i18next-http-backend": "^3.0.2",
