@@ -5,7 +5,7 @@
   flex: 1;
   align-items: center;
   justify-content: center;
-  background-color: #f9fafb; /* мягкий серый фон */
+  background-color: var(--Surface-container-lowest-color);
   height: 100%;
 }
 
@@ -18,14 +18,14 @@
   padding: 2rem;
   max-width: 400px;
   width: 100%;
-  background-color: #ffffff;
+  background-color: var(--Surface-container-high-color);
   border-radius: 1rem;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
   text-align: center;
 }
 
 .empty-board-icon {
-  color: #9ca3af; /* серый для иконки */
+  color: var(--On-surface-container-color);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -34,12 +34,12 @@
 .empty-board-title {
   font-size: 1.25rem;
   font-weight: 600;
-  color: #111827;
+  color: var(--On-surface-container-color);
 }
 
 .empty-board-text {
   font-size: 0.95rem;
-  color: #6b7280;
+  color: var(--On-surface-container-color);
 }
 
 .empty-board-button {
@@ -48,8 +48,8 @@
   justify-content: center;
   gap: 0.5rem;
   padding: 0.5rem 1.25rem;
-  background-color: #3b82f6;
-  color: #ffffff;
+  background-color: var(--Primary-color);
+  color: var(--On-primary-color);
   font-weight: 500;
   border: none;
   border-radius: 0.75rem;
@@ -57,7 +57,8 @@
   transition: background-color 0.2s ease;
 
   &:hover {
-    background-color: #2563eb;
+    background-color: var(--Primary-container-color);
+    color: var(--On-primary-container-color);
   }
 
   svg {

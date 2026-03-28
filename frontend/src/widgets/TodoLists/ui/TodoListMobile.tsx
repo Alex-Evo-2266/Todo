@@ -8,6 +8,8 @@ import { TodoListCard } from "./TodoListCard"
 import { useTranslation } from "react-i18next"
 import { CreateDialog } from "../../../features/CreactTodoListDialog"
 import { LogoutButton } from "../../../features/LogoutBtn"
+import { ThemeSwitcher } from "../../../features/ThemeSwitcher/ui/ThemeSwitcher"
+import { LanguageSwitcher } from "../../../features/LanguageSwitcher/ui/LanguageSwitcher"
 
 export const TodoListsMobile = () => {
 
@@ -24,13 +26,17 @@ export const TodoListsMobile = () => {
             {t("boards")}
         </Button>
         <BottomSheetsUi visible={isOpenList} onHide={()=>setOpenList(false)}>
-            <ListContainer className="todolists-panel__list" transparent>
+            <ListContainer flex gap={5} className="todolists-panel__list" transparent>
             {
                 data?.map((item)=>(
                     <TodoListCard item={item} key={item.id} active={item.id === id} onHide={()=>setOpenList(false)}/>
                 ))
             }
             </ListContainer>
+            <div style={{ display: "flex", gap: 10, marginBottom: 10 }}>
+                <ThemeSwitcher />
+                <LanguageSwitcher />
+            </div>
             <LogoutButton/>
         </BottomSheetsUi>
         <CreateDialog

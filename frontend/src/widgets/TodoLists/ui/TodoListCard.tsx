@@ -27,7 +27,10 @@ export const TodoListCard = ({item, active, onHide}:TodoListCardProps) => {
             onClick: ()=>setOpenEditDialog(true),
         },{
             title: t("access"),
-            onClick: ()=>navigate(`${ROOT_URL}/todos/access/${item.id}`)
+            onClick: ()=>{
+                setTimeout(()=>onHide?.(),0)
+                navigate(`${ROOT_URL}/todos/access/${item.id}`)
+            }
         },{
             title: t("delete"),
             onClick: ()=>setOpenDeleteDialog(true)
@@ -52,6 +55,7 @@ export const TodoListCard = ({item, active, onHide}:TodoListCardProps) => {
                 key={item.id} 
                 header={item.title} 
                 onClick={(e)=>toglePath(e, item.id)}
+                className="list-item-surface-highest"
                 control={
                     <IconButton 
                         onClick={(event)=>setOpenMenu({x: event.clientX, y: event.clientY})} 

@@ -26,5 +26,18 @@
     "delete_board_head": "Delete board",
     "delete_board_text": "Are you sure you want to delete the board",
     "edit_board-head": "Edit to-do list name",
-    "edit_board-text": "Enter the name of the to-do list"
+    "edit_board-text": "Enter the name of the to-do list",
+
+    "empty-board-high": "Select a board",
+    "empty-board-text": "No tasks will be displayed until a board is selected.",
+    "empty-board-btn": "Create board",
+
+    "complited": "Completed",
+    "filter-title": "Filter",
+
+    "no-check": "Not completed",
+    "check": "Completed",
+    "any": "Any",
+
+    "access": "Access settings"
 }

@@ -13,6 +13,7 @@ interface FilterPopoverProps {
   filters: FilterType[];
   filterValues: Record<string, any>; // текущее состояние фильтров
   updateFilter: (key: string, value: any) => void;
+  title: string
 }
 
 export const FilterPopover = ({
@@ -21,7 +22,9 @@ export const FilterPopover = ({
   filters,
   filterValues,
   updateFilter,
+  title
 }: FilterPopoverProps) => {
+
   if (!isOpen) return null;
 
   return (
@@ -31,7 +34,7 @@ export const FilterPopover = ({
         shadow={6}
         onClick={(e) => e.stopPropagation()}
       >
-        <h4>Filters</h4>
+        <h4>{title}</h4>
         <div className="filter-list">
           {filters.map((f) => {
             switch (f.type) {
@@ -70,7 +73,7 @@ export const FilterPopover = ({
             }
           })}
         </div>
-        <Button onClick={onClose}>Close</Button>
+        <Button styleType='filledTotal' onClick={onClose}>Close</Button>
       </Panel>
     </div>
   );

@@ -2,10 +2,12 @@ import { Button, Panel, Plus, Typography } from "alex-evo-sh-ui-kit";
 import { CreateDialog } from "../../../features/CreactTodoListDialog";
 import { useState } from "react";
 import './EmptyBoardPage.scss'
+import { useTranslation } from "react-i18next";
 
 export function EmptyBoardPlaceholder() {
 
     const [visibleCreateDialog, setVisibleCreateDialog] = useState(false)
+    const {t} = useTranslation()
     
   return (
     <div className="empty-board-placeholder">
@@ -14,13 +16,13 @@ export function EmptyBoardPlaceholder() {
           <Plus size={"48"} />
         </div>
         <Typography type="title" className="empty-board-title">
-          Выберите доску
+          {t("empty-board-high")}
         </Typography>
         <Typography type="body" className="empty-board-text">
-          Пока доска не выбрана, задачи отображаться не будут.
+          {t("empty-board-text")}
         </Typography>
         <Button onClick={() => setVisibleCreateDialog(true)} className="empty-board-button">
-          Создать доску
+          {t("empty-board-btn")}
         </Button>
       </Panel>
       <CreateDialog

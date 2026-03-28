@@ -8,6 +8,8 @@ import { TodoListCard } from "./TodoListCard"
 import { useTranslation } from "react-i18next"
 import { CreateDialog } from "../../../features/CreactTodoListDialog"
 import { LogoutButton } from "../../../features/LogoutBtn"
+import { ThemeSwitcher } from "../../../features/ThemeSwitcher/ui/ThemeSwitcher"
+import { LanguageSwitcher } from "../../../features/LanguageSwitcher/ui/LanguageSwitcher"
 
 export const TodoLists = () => {
 
@@ -19,6 +21,10 @@ export const TodoLists = () => {
     return (
         <>
             <Panel className="todolists-panel" shadow={6}>
+                <div style={{ display: "flex", gap: 10, marginBottom: 10 }}>
+                    <ThemeSwitcher />
+                    <LanguageSwitcher />
+                </div>
                 <FilledButton size="medium" style={{width: "100%"}} onClick={()=>setVisibleCreateDialog(true)}>{t("create")}</FilledButton>
                 <ListContainer flex gap={5} className="todolists-panel__list" transparent>
                 {
@@ -27,6 +33,7 @@ export const TodoLists = () => {
                     ))
                 }
                 </ListContainer>
+                
                 <LogoutButton/>
             </Panel>
             <CreateDialog

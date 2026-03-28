@@ -8,6 +8,7 @@ import { useError } from "../../../shared/hooks/errorMessage.hook"
 import { TodoItem } from "../../../widgets/TodoItem"
 import { buildMoveColumnPayload } from "../helpers/buildMoveColumnPayload"
 import { TodoSearch } from "./searchTodo"
+import { Loader } from "../../../shared"
 
 type TodoListProps = {
     onCreate: () => void
@@ -64,7 +65,7 @@ const TodoListNoMemo = ({onCreate, onEdit}:TodoListProps) => {
         return null
 
     if(isLoading)
-        return(<div>...loading</div>)
+        return(<Loader/>)
 
     return (
         <>
@@ -92,7 +93,7 @@ const TodoListNoMemo = ({onCreate, onEdit}:TodoListProps) => {
 
                                 {provided.placeholder}
 
-                                {isFetching && <span>Loading...</span>}
+                                {isFetching && <Loader/>}
                             </ListContainer>
                         )}
                     </Droppable>

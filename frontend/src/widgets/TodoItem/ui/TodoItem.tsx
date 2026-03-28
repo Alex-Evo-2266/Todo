@@ -27,11 +27,12 @@ export const TodoItem = ({item, index, onClick}:TodoItemProps) => {
         <Draggable draggableId={`task=${item.id}`} index={index}>
             {(provided2) => (
                 <ListItem
+                noTransformTransition
                 onClick={onClick}
                 ref={provided2.innerRef} 
                 shadow={10} 
+                className="list-item-surface-high"
                 hovered 
-                style={{transition: "none"}}
                 control={<Checkbox checked={item.completed} onChange={checkHandler}/>}
                 header={`${t("todo_title")}${item.title}`}
                 {...provided2.draggableProps}

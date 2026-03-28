@@ -9,14 +9,7 @@ export type TodoSearchProps = {
     onCreate: () => void
 }
 
-const filters: FilterType[] = [
-  { type: "select", label: "Complited", value: "complited", options: [
-      { title: "Any", value: "undefined" },
-      { title: "true", value: "true", icon: <Check/> },
-      { title: "false", value: "false", icon: <X/> }
-    ]
-  },
-];
+
 
 export const TodoSearch = ({title, onCreate, onSearch}:TodoSearchProps) => {
 
@@ -39,6 +32,15 @@ export const TodoSearch = ({title, onCreate, onSearch}:TodoSearchProps) => {
         }
     }
 
+    const filters: FilterType[] = [
+        { type: "select", label: t("complited"), value: "complited", options: [
+            { title: t("any"), value: "undefined" },
+            { title: t("check"), value: "true", icon: <Check/> },
+            { title: t("no-check"), value: "false", icon: <X/> }
+            ]
+        },
+    ];
+
     return(
         <>
         <Panel className="title_div" shadow={6} style={{flex: "0 0 160px"}}>
@@ -60,6 +62,7 @@ export const TodoSearch = ({title, onCreate, onSearch}:TodoSearchProps) => {
             </div>
         </Panel>
         <FilterPopover 
+            title={t("filter-title")}
             onClose={()=>setFilterOpen(false)} 
             isOpen={filterOpen} 
             filters={filters}

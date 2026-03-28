@@ -37,3 +37,11 @@ body{
 
     user-select: none;
 }
+
+.list-item-surface-high{
+  background-color: var(--Surface-container-high-color);
+}
+
+.list-item-surface-highest{
+  background-color: var(--Surface-container-highest-color);
+}
