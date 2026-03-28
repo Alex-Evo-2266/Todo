@@ -1,6 +1,7 @@
 import { TextDialog } from "alex-evo-sh-ui-kit"
 import { useCreateTodoListMutation } from "../../../entites/todos/slices/todos"
 import { useTranslation } from "react-i18next"
+import { useError } from "../../../shared/hooks/errorMessage.hook"
 
 type CreateDialogProps = {
     open: boolean
@@ -8,7 +9,8 @@ type CreateDialogProps = {
 }
 
 export const CreateDialog = ({open, hide}:CreateDialogProps) => {
-    const [request] = useCreateTodoListMutation()
+    const [request, {error, isError}] = useCreateTodoListMutation()
+    useError({error, isError})
     const {t} = useTranslation()
 
     if(!open)
