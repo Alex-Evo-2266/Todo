@@ -19,20 +19,22 @@ const TodoListNoMemo = ({onCreate, onEdit}:TodoListProps) => {
 
     const {id} = useParams()
     const [cursor, setCursor] = useState<string | null>(null)
-    const [search, setSearch] = useState<{search?: string, complited?: boolean}>({})
+    const [search, setSearch] = useState<{search?: string, complited?: boolean, dateFrom?: string, dateTo?: string}>({})
 
     const { data, isLoading, isFetching } = useGetTodoListWithTodosQuery({
         id: id ?? "",
         cursor,
         limit: 20,
         search: search.search === ""? undefined: search.search,
-        completed: search.complited === undefined ? undefined : search.complited
+        completed: search.complited === undefined ? undefined : search.complited,
+        dateFrom: search.dateFrom,
+        dateTo: search.dateTo
     })
 
     const [request, {error, isError}] = useMoveTodoMutation()
     useError({error, isError})
 
-    const setNewFilter = (data:{search?: string, complited?: boolean}) => {
+    const setNewFilter = (data:{search?: string, complited?: boolean, dateFrom?: string, dateTo?: string}) => {
         setCursor(null)
         setSearch(data)
     }

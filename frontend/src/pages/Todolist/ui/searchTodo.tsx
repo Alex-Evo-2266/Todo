@@ -2,10 +2,11 @@ import { Check, FilterIcon, IconButton, Panel, Plus, SearchIcon, TextField, Typo
 import { useTranslation } from "react-i18next"
 import { useCallback, useState } from "react"
 import { FilterPopover, type FilterType } from "../../../shared/ui/FilterPopover/FilterPopover"
+import { combineToDate, formatDate } from "../../../shared/helpers/date"
 
 export type TodoSearchProps = {
     title: string,
-    onSearch: (data:{search?: string, complited?: boolean}) => void
+    onSearch: (data:{search?: string, complited?: boolean, dateFrom?: string, dateTo?: string}) => void
     onCreate: () => void
 }
 
@@ -15,12 +16,14 @@ export const TodoSearch = ({title, onCreate, onSearch}:TodoSearchProps) => {
 
     const {t} = useTranslation()
     const [completed, setCompleted] = useState<undefined | boolean>()
+    const [from, setFrom] = useState<undefined | Date>()
+    const [to, setTo] = useState<undefined | Date>()
     const [filterOpen, setFilterOpen] = useState<boolean>(false)
     const [search, setSearch] = useState<string>("")
 
     const searchHandler = useCallback(() => {
-        onSearch({search, complited: completed})
-    },[onSearch, search, completed])
+        onSearch({search, complited: completed, dateFrom: from?.toISOString(), dateTo: to?.toISOString()})
+    },[onSearch, search, completed, to, from])
 
     const filterHandler = (key: string, value: any) => {
         if(key === "complited"){
@@ -28,6 +31,20 @@ export const TodoSearch = ({title, onCreate, onSearch}:TodoSearchProps) => {
                 if(value === "undefined")
                     return undefined
                 return value === "true"
+            })
+        }
+        if(key === "dateFrom"){
+            setFrom(()=>{
+                if(!value || value === "undefined" || value === "")
+                    return undefined
+                return combineToDate(value)
+            })
+        }
+        if(key === "dateTo"){
+            setTo(()=>{
+                if(!value || value === "undefined" || value === "")
+                    return undefined
+                return combineToDate(value)
             })
         }
     }
@@ -39,6 +56,12 @@ export const TodoSearch = ({title, onCreate, onSearch}:TodoSearchProps) => {
             { title: t("no-check"), value: "false", icon: <X/> }
             ]
         },
+        {
+            type: "date", label: t("dateFrom"), value: "dateFrom"
+        },
+        {
+            type: "date", label: t("dateTo"), value: "dateTo"
+        }
     ];
 
     return(
@@ -66,7 +89,11 @@ export const TodoSearch = ({title, onCreate, onSearch}:TodoSearchProps) => {
             onClose={()=>setFilterOpen(false)} 
             isOpen={filterOpen} 
             filters={filters}
-            filterValues={{complited: completed !== undefined? String(completed):"undefined"}}
+            filterValues={{
+                complited: completed !== undefined? String(completed):"undefined",
+                dateFrom: from ? formatDate(from) : undefined,
+                dateTo: to ? formatDate(to) : undefined
+            }}
             updateFilter={filterHandler}
         />
         </>

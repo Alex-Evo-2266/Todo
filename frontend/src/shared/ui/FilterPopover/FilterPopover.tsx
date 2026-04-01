@@ -1,11 +1,13 @@
-import { Button, Checkbox, Panel, TextField, Typography, type IOption } from 'alex-evo-sh-ui-kit';
+import { Button, Checkbox, DateField, Panel, TextField, Typography, type IOption } from 'alex-evo-sh-ui-kit';
 import './FilterPopover.scss'
 import { SelectField } from '../SelectField';
+import { useTranslation } from 'react-i18next';
 
 export type FilterType = 
   | { type: "boolean"; label: string; value: string }
   | { type: "select"; label: string; value: string; options: IOption[] }
-  | { type: "text"; label: string; value: string };
+  | { type: "text"; label: string; value: string }
+  | { type: "date"; label: string; value: string };
 
 interface FilterPopoverProps {
   isOpen: boolean;
@@ -22,8 +24,10 @@ export const FilterPopover = ({
   filters,
   filterValues,
   updateFilter,
-  title
+  title,
 }: FilterPopoverProps) => {
+
+  const {t} = useTranslation()
 
   if (!isOpen) return null;
 
@@ -70,10 +74,22 @@ export const FilterPopover = ({
                     onChange={(e) => updateFilter(f.value, e.target.value)}
                   />
                 );
+              case "date":
+                return(
+                  <DateField
+                    container={document.getElementById("modal")}
+                    border
+                    onClear={()=>updateFilter(f.value, "")}
+                    key={f.value}
+                    placeholder={f.label}
+                    value={filterValues[f.value] || ""}
+                    onChange={data=>updateFilter(f.value, data)}
+                  />
+                )
             }
           })}
         </div>
-        <Button styleType='filledTotal' onClick={onClose}>Close</Button>
+        <Button styleType='filledTotal' onClick={onClose}>{t("close")}</Button>
       </Panel>
     </div>
   );
