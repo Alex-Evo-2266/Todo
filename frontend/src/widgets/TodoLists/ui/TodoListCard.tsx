@@ -55,7 +55,7 @@ export const TodoListCard = ({item, active, onHide}:TodoListCardProps) => {
                 key={item.id} 
                 header={item.title} 
                 onClick={(e)=>toglePath(e, item.id)}
-                className="list-item-surface-highest"
+                className="list-item-surface-highest list-item_long-text"
                 control={
                     <IconButton 
                         onClick={(event)=>setOpenMenu({x: event.clientX, y: event.clientY})} 
