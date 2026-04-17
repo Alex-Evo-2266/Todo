@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Check,
+  FilterIcon,
   IconButton,
   ListContainer,
   ListItem,
@@ -20,7 +21,7 @@ import { useGetAllUserQuery, type User } from "../../../entites/users/slices/use
 import { useError } from "../../../shared/hooks/errorMessage.hook";
 import { useTranslation } from "react-i18next";
 import './AccessPage.scss'
-import { Loader } from "../../../shared";
+import { FilterPopover, Loader, type FilterType } from "../../../shared";
 
 export const AccessPage = () => {
   const { id } = useParams();
@@ -28,6 +29,8 @@ export const AccessPage = () => {
 
   const [cursor, setCursor] = useState<string | undefined>(undefined);
   const [search, setSearch] = useState<string | undefined>(undefined);
+  const [filterOpen, setFilterOpen] = useState<boolean>(false);
+  const [access, setAccess] = useState<boolean | undefined>(undefined);
 
   const { data } = useGetTodoListWithTodosQuery({ id: id ?? "" });
 
@@ -68,14 +71,14 @@ export const AccessPage = () => {
     setCursor(undefined);
   }, [id]);
 
-  const getType = (user: User) => {
+  const getType = useCallback((user: User) => {
     if (user.id === data?.ownerId) return "owner";
     if (accessUserIds.has(user.id)) return "access";
     return "other";
-  };
+  },[accessUserIds, data])
 
   // 🔹 обработчик
-  const handleToggle = (user: User) => {
+  const handleToggle = useCallback((user: User) => {
     if (!id) return;
 
     const type = getType(user);
@@ -87,29 +90,63 @@ export const AccessPage = () => {
     } else {
       requestAdd({ todoListId: id, userId: String(user.id) });
     }
-  };
+  },[getType])
 
-    const fatchNewBlock:IntersectionObserverCallback = useCallback((entries) => {
-            const entry = entries[0]
-  
-            if (entry.isIntersecting && !isFetching && usersData?.next_cursor) {
-                setCursor(usersData.next_cursor);
-            }
-    },[isFetching, usersData?.next_cursor])
+  const fatchNewBlock:IntersectionObserverCallback = useCallback((entries) => {
+          const entry = entries[0]
+
+          if (entry.isIntersecting && !isFetching && usersData?.next_cursor) {
+              setCursor(usersData.next_cursor);
+          }
+  },[isFetching, usersData?.next_cursor])
+
+
+  const filterHandler = (key: string, value: any) => {
+      if(key === "access"){
+          setAccess(()=>{
+              if(value === "undefined")
+                  return undefined
+              return value === "true"
+          })
+      }
+  }
+
+  const filters: FilterType[] = [
+      { type: "select", label: t("access-filter"), value: "access", options: [
+          { title: t("any"), value: "undefined" },
+          { title: t("access-yes"), value: "true", icon: <Check/> },
+          { title: t("access-no"), value: "false", icon: <X/> }
+          ]
+      }
+  ];
+
+  const dataFilter = useCallback((users: User[] | undefined) => {
+    return users?.map(user=>({user: user, type: getType(user)})).filter(user=>access === undefined || ((user.type === "owner" || user.type === "access") && access) || (user.type === "other" && !access))
+  },[getType, access])
 
 
   return (
     <>
       <Panel className="title-access-div" shadow={6}>
-        <Search onSearch={searchHandler}/>
+        <Search onSearch={searchHandler} btn={{icon: <FilterIcon/>, onClick: ()=>setFilterOpen(true),}}/>
         <Typography type="title">
           {t("title_todolist")}: {data?.title}
         </Typography>
+        <FilterPopover
+            title={t("filter-title")}
+            btnClick={()=>setFilterOpen(false)} 
+            textBtn={t('close')}
+            isOpen={!!filterOpen} 
+            filters={filters}
+            filterValues={{
+                access: access !== undefined? String(access):"undefined",
+            }}
+            updateFilter={filterHandler}
+        />
       </Panel>
 
       <ListContainer onObserv={fatchNewBlock} scroll flex gap={5} transparent style={{display: "flex", gap: "5px", flexDirection: "column", height: "calc(100% - 150px)", paddingInline: "5px"}}>
-        {usersData?.users.map((user) => {
-          const type = getType(user);
+        {dataFilter(usersData?.users)?.map(({user, type}) => {
 
           return (
             <ListItem

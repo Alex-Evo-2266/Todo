@@ -51,6 +51,13 @@
     "close": "Закрыть",
 
     "dateFrom": "Дата от",
-    "dateTo": "Дата до"
+    "dateTo": "Дата до",
+
+    "access-filter": "Права",
+    "access-any": "Любые",
+    "access-yes": "Выданны",
+    "access-no": "Не выданны",
+
+    "search": "Поиск"
 
 }

@@ -41,5 +41,15 @@
 
     "access": "Access settings",
 
-    "close": "Сlose"
+    "close": "Сlose",
+    
+    "dateFrom": "Date from",
+    "dateTo": "Date to",
+
+    "access-filter": "Access",
+    "access-any": "Any",
+    "access-yes": "Granted",
+    "access-no": "Not granted",
+
+    "search": "Search"
 }

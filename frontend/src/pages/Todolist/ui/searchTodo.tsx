@@ -23,6 +23,7 @@ export const TodoSearch = ({title, onCreate, onSearch}:TodoSearchProps) => {
 
     const searchHandler = useCallback(() => {
         onSearch({search, complited: completed, dateFrom: from?.toISOString(), dateTo: to?.toISOString()})
+        setFilterOpen(false)
     },[onSearch, search, completed, to, from])
 
     const filterHandler = (key: string, value: any) => {
@@ -48,6 +49,11 @@ export const TodoSearch = ({title, onCreate, onSearch}:TodoSearchProps) => {
             })
         }
     }
+
+    const enter = useCallback((event: React.KeyboardEvent<HTMLInputElement>) => {
+        if(event.code === "Enter")
+            searchHandler()
+    },[searchHandler])
 
     const filters: FilterType[] = [
         { type: "select", label: t("complited"), value: "complited", options: [
@@ -78,7 +84,14 @@ export const TodoSearch = ({title, onCreate, onSearch}:TodoSearchProps) => {
 
                 <div style={{display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10}}>
                     <IconButton shadow={5} icon={<FilterIcon />} onClick={()=>setFilterOpen(true)} />
-                    <TextField placeholder="search" className="search-todo" value={search} onChange={e=>setSearch(e)} border/>
+                    <TextField 
+                    placeholder="search" 
+                    className="search-todo" 
+                    value={search} 
+                    onChange={e=>setSearch(e)} 
+                    border 
+                    onKeyDown={enter}
+                    />
                     <IconButton shadow={5} icon={<SearchIcon />} onClick={searchHandler} />
                 </div>
 
@@ -86,7 +99,8 @@ export const TodoSearch = ({title, onCreate, onSearch}:TodoSearchProps) => {
         </Panel>
         <FilterPopover 
             title={t("filter-title")}
-            onClose={()=>setFilterOpen(false)} 
+            btnClick={searchHandler} 
+            textBtn={t('search')}
             isOpen={filterOpen} 
             filters={filters}
             filterValues={{

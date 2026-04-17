@@ -1,7 +1,6 @@
 import { Button, Checkbox, DateField, Panel, TextField, Typography, type IOption } from 'alex-evo-sh-ui-kit';
 import './FilterPopover.scss'
 import { SelectField } from '../SelectField';
-import { useTranslation } from 'react-i18next';
 
 export type FilterType = 
   | { type: "boolean"; label: string; value: string }
@@ -11,7 +10,8 @@ export type FilterType =
 
 interface FilterPopoverProps {
   isOpen: boolean;
-  onClose: () => void;
+  btnClick: () => void;
+  textBtn: string;
   filters: FilterType[];
   filterValues: Record<string, any>; // текущее состояние фильтров
   updateFilter: (key: string, value: any) => void;
@@ -20,19 +20,18 @@ interface FilterPopoverProps {
 
 export const FilterPopover = ({
   isOpen,
-  onClose,
+  btnClick,
   filters,
   filterValues,
   updateFilter,
+  textBtn,
   title,
 }: FilterPopoverProps) => {
-
-  const {t} = useTranslation()
 
   if (!isOpen) return null;
 
   return (
-    <div className="filter-popover-backdrop" onClick={onClose}>
+    <div className="filter-popover-backdrop" onClick={btnClick}>
       <Panel
         className="filter-popover"
         shadow={6}
@@ -89,7 +88,7 @@ export const FilterPopover = ({
             }
           })}
         </div>
-        <Button styleType='filledTotal' onClick={onClose}>{t("close")}</Button>
+        <Button styleType='filledTotal' onClick={btnClick}>{textBtn}</Button>
       </Panel>
     </div>
   );
