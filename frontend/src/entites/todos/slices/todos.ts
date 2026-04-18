@@ -293,7 +293,6 @@ export const todoApi = createApi({
           if (err?.error?.status === 409 && err?.error?.data) {
             const serverTodos = err.error.data
 
-            // 👉 сервер может вернуть массив
             queries.forEach(({ originalArgs }) => {
               dispatch(
                 todoApi.util.updateQueryData(

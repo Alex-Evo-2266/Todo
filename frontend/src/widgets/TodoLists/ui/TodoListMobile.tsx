@@ -37,7 +37,7 @@ export const TodoListsMobile = () => {
                 <ThemeSwitcher />
                 <LanguageSwitcher />
             </div>
-            <LogoutButton/>
+            <LogoutButton style={{color: "var(--On-surface-color)"}}/>
         </BottomSheetsUi>
         <CreateDialog
                 open={visibleCreateDialog}

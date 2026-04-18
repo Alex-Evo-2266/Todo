@@ -3,7 +3,11 @@ import { useTranslation } from "react-i18next"
 import { stringToColor } from "../../../shared/helpers/stringToColor"
 import { useAuth } from "alex-evo-sh-auth"
 
-export const LogoutButton = () => {
+interface LogoutButtonProps{
+    style?: React.CSSProperties;
+}
+
+export const LogoutButton = ({style}:LogoutButtonProps) => {
     const { t } = useTranslation()
     const { user, logout } = useAuth()
     const { colors } = useThemes()
@@ -25,7 +29,8 @@ export const LogoutButton = () => {
                 justifyContent: "space-between",
                 padding: "8px 10px",
                 borderRadius: "12px",
-                cursor: "pointer"
+                cursor: "pointer",
+                ...style
             }}
         >
             {/* Левая часть — профиль */}
