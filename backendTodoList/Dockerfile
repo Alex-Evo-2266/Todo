@@ -18,6 +18,8 @@ ARG PORT=3000
 ENV CONTAINER_NAME=$CONTAINER_NAME
 ENV PORT=$PORT
 
+RUN npx prisma generate
+
 RUN npm run build
 RUN mkdir -p config
 # RUN npm run generate:pages
