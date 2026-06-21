@@ -26,6 +26,7 @@ export const TodoListsMobile = () => {
             {t("boards")}
         </Button>
         <BottomSheetsUi visible={isOpenList} onHide={()=>setOpenList(false)}>
+            <Button onClick={()=>setVisibleCreateDialog(true)}>{t("empty-board-btn")}</Button>
             <ListContainer flex gap={5} className="todolists-panel__list" transparent>
             {
                 data?.map((item)=>(
